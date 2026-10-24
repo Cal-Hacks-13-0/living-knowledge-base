@@ -1,0 +1,244 @@
+// Living Knowledge Base — Prisma schema
+// SQLite for local development. Single-user local mode (see README).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MonitoringFrequency {
+  MANUAL
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum SourceType {
+  RSS
+  GITHUB_RELEASES
+  HTML
+}
+
+enum SourceStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+}
+
+enum KnowledgeEntryStatus {
+  DRAFT
+  VERIFIED
+  OUTDATED
+  SUPERSEDED
+}
+
+enum InsightType {
+  NEW_DISCOVERY
+  KNOWLEDGE_EXTENSION
+  CONTRADICTION
+  OUTDATED_INFORMATION
+  ACTIONABLE_OPPORTUNITY
+}
+
+enum InsightStatus {
+  PENDING
+  SAVED
+  DISMISSED
+  ACTIONED
+}
+
+enum ResearchRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum ProposalOperation {
+  CREATE
+  UPDATE
+  MERGE
+  DELETE
+  MARK_OBSOLETE
+}
+
+enum ProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model KnowledgeBase {
+  id                   String              @id @default(cuid())
+  name                 String
+  description          String
+  userGoal             String
+  preferencesJson       String              @default("{}")
+  monitoringFrequency  MonitoringFrequency @default(MANUAL)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  categories  KnowledgeCategory[]
+  sources     Source[]
+  entries     KnowledgeEntry[]
+  insights    Insight[]
+  researchRuns ResearchRun[]
+  proposals   KnowledgeChangeProposal[]
+
+  @@index([createdAt])
+}
+
+model KnowledgeCategory {
+  id              String   @id @default(cuid())
+  knowledgeBaseId String
+  name            String
+  description     String   @default("")
+  parentId        String?
+
+  knowledgeBase KnowledgeBase       @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  parent        KnowledgeCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children      KnowledgeCategory[] @relation("CategoryHierarchy")
+  entries       KnowledgeEntry[]
+
+  @@index([knowledgeBaseId])
+  @@unique([knowledgeBaseId, name, parentId])
+}
+
+model Source {
+  id                     String       @id @default(cuid())
+  knowledgeBaseId        String
+  name                   String
+  url                    String
+  type                   SourceType
+  status                 SourceStatus @default(ACTIVE)
+  lastCheckedAt          DateTime?
+  lastSuccessfulFetchAt  DateTime?
+  lastError              String?
+  etag                   String?
+  lastModified           String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  knowledgeBase KnowledgeBase    @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  documents     SourceDocument[]
+
+  @@index([knowledgeBaseId])
+  @@unique([knowledgeBaseId, url])
+}
+
+model SourceDocument {
+  id          String    @id @default(cuid())
+  sourceId    String
+  externalId  String?
+  url         String
+  title       String
+  content     String
+  contentHash String
+  publishedAt DateTime?
+  fetchedAt   DateTime  @default(now())
+
+  source           Source            @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  knowledgeEntries  KnowledgeEntry[]
+  insightEvidence   InsightEvidence[]
+
+  @@index([sourceId])
+  @@unique([sourceId, contentHash])
+  @@unique([sourceId, url])
+}
+
+model KnowledgeEntry {
+  id                String                @id @default(cuid())
+  knowledgeBaseId   String
+  categoryId        String?
+  title             String
+  summary           String
+  content           String
+  sourceDocumentId  String?
+  status            KnowledgeEntryStatus  @default(DRAFT)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  knowledgeBase   KnowledgeBase       @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  category        KnowledgeCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  sourceDocument  SourceDocument?     @relation(fields: [sourceDocumentId], references: [id], onDelete: SetNull)
+  insightEvidence InsightEvidence[]
+  proposalTargets KnowledgeChangeProposal[]
+
+  @@index([knowledgeBaseId])
+  @@index([categoryId])
+}
+
+model Insight {
+  id                 String        @id @default(cuid())
+  knowledgeBaseId    String
+  title              String
+  type               InsightType
+  summary            String
+  whyItMatters       String
+  recommendedAction  String
+  confidence         Float         @default(0)
+  status             InsightStatus @default(PENDING)
+  createdAt          DateTime      @default(now())
+
+  knowledgeBase KnowledgeBase             @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  evidence      InsightEvidence[]
+  proposals     KnowledgeChangeProposal[]
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+}
+
+model InsightEvidence {
+  id                String  @id @default(cuid())
+  insightId         String
+  sourceDocumentId  String
+  knowledgeEntryId  String?
+  explanation       String
+
+  insight         Insight         @relation(fields: [insightId], references: [id], onDelete: Cascade)
+  sourceDocument  SourceDocument  @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+  knowledgeEntry  KnowledgeEntry? @relation(fields: [knowledgeEntryId], references: [id], onDelete: SetNull)
+
+  @@index([insightId])
+  @@index([sourceDocumentId])
+}
+
+model ResearchRun {
+  id                  String            @id @default(cuid())
+  knowledgeBaseId     String
+  status              ResearchRunStatus @default(RUNNING)
+  startedAt           DateTime          @default(now())
+  completedAt         DateTime?
+  documentsFetched    Int               @default(0)
+  documentsProcessed  Int               @default(0)
+  insightsGenerated   Int               @default(0)
+  errorMessage        String?
+
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+}
+
+model KnowledgeChangeProposal {
+  id                String            @id @default(cuid())
+  knowledgeBaseId   String
+  insightId         String?
+  targetEntryId     String?
+  operation         ProposalOperation
+  proposedContent   String
+  status            ProposalStatus    @default(PENDING)
+  createdAt         DateTime          @default(now())
+  reviewedAt        DateTime?
+
+  knowledgeBase KnowledgeBase    @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  insight       Insight?         @relation(fields: [insightId], references: [id], onDelete: SetNull)
+  targetEntry   KnowledgeEntry?  @relation(fields: [targetEntryId], references: [id], onDelete: SetNull)
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+}
