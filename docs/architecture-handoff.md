@@ -306,10 +306,13 @@ route list are now:
   moved into the group).
 - `components/ui/` gained five hand-rolled primitives with no new dependency: `chip.tsx`,
   `tag-input.tsx`, `dropdown-menu.tsx`, `drawer.tsx`, `row-item.tsx`.
-- `components/assistant/ai-assistant.tsx` + `lib/ai/assistant-agent.ts` +
-  `POST /api/knowledge-bases/:id/chat` — the new AI Assistant chat, ephemeral
-  (client-held history, nothing persisted), grounded via the existing
-  `findRelevantEntries` keyword-overlap retrieval (no new retrieval system).
+- `components/assistant/ai-assistant-panel.tsx` + `components/dashboard/kb-workspace.tsx`
+  + `lib/ai/assistant-agent.ts` + `POST /api/knowledge-bases/:id/chat` — the AI Assistant
+  chat. **Corrected in §13**: this is a persistent side panel the content column makes
+  room for, not a modal `Drawer` — `kb-workspace.tsx` owns the open/closed state so the
+  toggle button (in the KB header) and the panel stay in sync. Ephemeral (client-held
+  history, nothing persisted), grounded via the existing `findRelevantEntries`
+  keyword-overlap retrieval (no new retrieval system).
 - `GET /api/search` — cross-KB entry search (`app/(shell)/search/`); `app/(shell)/inbox/`
   reuses the existing `InsightCard`/`ProposalCard` components with a cross-KB query
   (no new models, just dropped the `knowledgeBaseId` filter).
@@ -317,9 +320,11 @@ route list are now:
   cron map, `lib/ai/schemas.ts`). SQLite has no enum CHECK constraint, so this needed a
   Prisma Client regen only, no migration file.
 - `lib/ai/blueprint-agent.ts::generateBlueprint` now takes an optional third
-  `preferences` argument (monitoring frequency / source-type interests / free text from
-  the wizard's Preferences step) and weaves it into the prompt —
-  `POST /api/blueprints/generate`'s request schema grew a matching `preferences` field.
+  `preferences` argument and weaves it into the prompt — `POST /api/blueprints/generate`'s
+  request schema grew a matching `preferences` field. The schema still has optional
+  `sourceTypes`/`additionalNotes` sub-fields (harmless, default to empty), but **the
+  wizard's Preferences step was trimmed to just monitoring frequency** (§13) — it never
+  sends them anymore. Don't assume they're populated.
 
 All conventions in §4 (API envelope, server-components-query-Prisma-directly,
 `lib/client/api.ts` for client mutations, `router.refresh()` after writes) were kept
@@ -351,3 +356,114 @@ a knowledge base without going through the app/API at all.
   `VAULT_DIR` override (`.vitest-vault/`, gitignored) so no test run ever writes into the
   real project `vault/` folder. `tests/unit/vault-sync.test.ts` narrows further to its
   own temp dir for precise assertions.
+
+## 13. Category fix, category management, onboarding polish, UI cleanup (2026-10-24)
+
+### Category matching bug + fix
+
+`lib/knowledge/repository.ts::matchCategoryByTopics` used to query **all**
+`KnowledgeCategory` rows for a KB (top-level categories *and* subtopics, since subtopics
+are just rows with `parentId` set) and substring-match topics against every name. A topic
+like `"china"` would match a subtopic named `"VCT China"`, so new entries ended up tagged
+with categories that never appeared in the Library's category list/filter — looked like
+random/inconsistent categorization. **Fixed**: the query now filters `parentId: null`, so
+entries are only ever auto-tagged with top-level categories — subtopics are structural
+only, never a `KnowledgeEntry.categoryId` target going forward. (Pre-existing bad data in
+a running `dev.db` isn't auto-migrated — if you find more of it, same one-off fix as
+before: nullify entries whose `category.parentId` isn't null, optionally re-match against
+top-level categories using the entry's own title/summary as crude topics.)
+
+### Category management (new)
+
+Categories are no longer fixed at KB-creation time — added CRUD (create + delete; no
+rename endpoint, wasn't asked for) reachable from the Library tab:
+
+- `GET/POST /api/knowledge-bases/:id/categories` — list (top-level only, with
+  `_count.entries`) / create. Create does a `findFirst` uniqueness pre-check rather than
+  `findUnique` on the compound key, because Prisma's generated compound-unique input type
+  requires `parentId: string` (non-nullable) even though the column is nullable — SQL
+  `NULL` has no equality match, so `findUnique` can't be used to look up `parentId: null`.
+- `DELETE /api/knowledge-bases/:id/categories/:categoryId` — deletes the category and its
+  subtopics (`deleteMany({where:{parentId}})` then `delete`) in a transaction. Entries
+  referencing it fall back to `null` (Prisma's `onDelete: SetNull`) — nothing else is
+  touched.
+- `components/library/category-manager.tsx` — collapsible panel on the Library page
+  (list with delete buttons + an add form). `components/library/library-browser.tsx` was
+  rewritten to **group entries by category** (section per top-level category, plus an
+  "Uncategorized" bucket) instead of a flat grid with a dropdown filter; `EntryCard` no
+  longer repeats the category as a per-card badge since the section heading already says
+  it. Both category routes call `syncKnowledgeBaseToVaultSafe` (§12) after mutating.
+
+### Onboarding wizard polish
+
+- **Every setup question is now rendered identically**, regardless of the AI's declared
+  `type` (`single_select`/`multi_select`/`short_text` is still in the schema/response but
+  no longer branches the UI): `QuestionField` always renders `TagInput` with
+  `suggestions: question.options.slice(0, 3)` — up to 3 multi-selectable chips plus a
+  free-text "Other" field. `lib/ai/setup-agent.ts`'s system prompt was updated to always
+  generate exactly 3 options per question (previously only "select type" questions got
+  options; `short_text` got none). `answers` state in `onboarding-wizard.tsx` is now
+  always `Record<string, string[]>` — no more `string | string[]` branching.
+- **Preferences step trimmed** (`components/setup/preferences-step.tsx`) to just
+  monitoring frequency — the source-type checkboxes and free-text notes field were
+  removed from the UI (the `WizardPreferences` type now only has
+  `monitoringFrequency`). See the §11 correction above re: the backend field still
+  existing but going unused.
+- **Blueprint regeneration is skipped when nothing changed**: `onboarding-wizard.tsx`
+  keeps a `blueprintInputsSnapshot` (JSON of `{answers, monitoringFrequency}` as of the
+  last successful generation) and a derived `blueprintIsStale` flag. Going Back from step
+  3 to step 2 and forward again without editing anything skips the
+  `/api/blueprints/generate` call entirely and just advances `stepIndex`; the forward
+  button's label reflects this live — "Next" when not stale, "Drafting your blueprint"
+  when it would regenerate. If you add more inputs that affect blueprint generation,
+  fold them into the snapshot key or this silently goes stale.
+- `components/blueprint/category-list.tsx`: "Add subtopic" moved out of the "..."
+  dropdown into an always-visible `+ Add subtopic` button at the bottom of each
+  category's subtopic list (kebab menu now only has Rename/Delete).
+- `components/blueprint/source-list.tsx`: dropped the verified/unverified
+  shield-icon/badge display entirely (the `BlueprintSource.verified` field still exists
+  in the data model and still drives `discoverVerifiedSources`'s behavior — only the UI
+  stopped showing it).
+- Step headings: step 3 is now "Review your blueprint" (was "...knowledge structure").
+  Step 5 ("Review & create") no longer shows Research priorities / Maintenance rules
+  editors — `blueprint.researchPriorities`/`maintenanceRules` are still generated by the
+  Blueprint Agent and still part of `BlueprintResponse`, just unused/discarded after step
+  2 now (they were never persisted to the DB in the first place — `POST
+  /api/knowledge-bases` never accepted them). `components/blueprint/string-list-editor.tsx`
+  was deleted (it had no remaining callers).
+
+### User-facing error display cleanup
+
+Per explicit product direction, raw technical error strings are no longer shown to the
+user:
+- `app/(shell)/kb/[id]/sources/page.tsx`: no more "ERROR" badge or raw
+  `source.lastError` text under a source card (parser/fetch error strings like `"Attribute
+  without value Line: 0..."` were leaking straight to the UI). `lastError` is still
+  written to the DB by the orchestrator (§6) — just not rendered. ACTIVE/PAUSED badges
+  still show.
+- `components/dashboard/run-research-button.tsx`: the post-run result message no longer
+  appends `ResearchRun.errorMessage` — just the fetched/processed/insight counts.
+- If you need to resurface error detail later (e.g. a "Source health" admin view), read
+  it from `Source.lastError` / `ResearchRun.errorMessage` directly — the data was never
+  removed, only its default-visible rendering.
+
+### Rename: Library -> Vault (nav label only)
+
+`components/dashboard/kb-nav.tsx`'s tab label changed from "Library" to "Vault", and the
+Overview page's "What's in the Knowledge Library" card title to "What's in the Vault" —
+**cosmetic only**, the route is still `/kb/[id]/library` and nothing else changed. Don't
+confuse this with the *actual* Markdown vault feature in §12 (`lib/vault/`, the
+filesystem export) — they're two unrelated things that happen to now share a name in the
+UI, because the user's mental model treats the in-app Library as "their vault" the same
+way the on-disk Markdown export is. If this gets confusing, it might be worth renaming
+the route too at some point — not done here since it wasn't asked for.
+
+### Home page centering
+
+`app/(shell)/page.tsx`'s root container is `flex min-h-full flex-col items-center
+justify-center` — the hero + stats + activity block is vertically and horizontally
+centered in the viewport (vs. previously being top-anchored with empty space below on
+short content). This relies on `<main>` in `app/(shell)/layout.tsx` having a definite
+height (it does, via flex-stretch inside the `h-dvh` row) for `min-h-full` to resolve.
+Other `(shell)` pages (Search/Inbox/Settings/Knowledge) were deliberately left
+top-anchored — they're list-heavy and read better starting from the top.
