@@ -21,7 +21,9 @@ export function RunResearchButton({ knowledgeBaseId }: { knowledgeBaseId: string
       );
       setMessage({
         kind: result.status === "FAILED" ? "error" : "success",
-        text: `Run ${result.status.toLowerCase()} — fetched ${result.documentsFetched}, processed ${result.documentsProcessed}, generated ${result.insightsGenerated} insight(s)${result.errorMessage ? `. ${result.errorMessage}` : "."}`,
+        // Keep this friendly — raw per-source fetch errors live on the
+        // Sources tab for anyone who wants that detail, not surfaced here.
+        text: `Run ${result.status.toLowerCase()} — fetched ${result.documentsFetched}, processed ${result.documentsProcessed}, generated ${result.insightsGenerated} insight(s).`,
       });
       router.refresh();
     } catch (err) {

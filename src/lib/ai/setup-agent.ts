@@ -15,9 +15,13 @@ knowledge base blueprint later. Ask at most 3 questions, fewer if the goal is al
 clear. Good questions cover: the user's primary objective, their experience/familiarity
 level, and any specific sub-topics, technologies, or constraints they care about.
 
-Each question must have a stable id, a type of "single_select", "multi_select", or
-"short_text", and 3-6 concise options for select types. Never ask a question whose answer
-is already obvious from the goal text already provided.`;
+Each question must have a stable id and EXACTLY 3 concise, distinct suggested options
+(short phrases, a few words each) — regardless of the question's nature. The UI always
+renders these as multi-selectable quick-pick chips plus a free-text field for anything
+not listed, so even an open-ended question needs 3 representative example answers (e.g.
+for "what's your experience level?" give 3 concrete levels; for "which technologies?"
+give 3 likely ones). Never ask a question whose answer is already obvious from the goal
+text already provided.`;
 
 export async function generateSetupQuestions(
   userGoal: string,

@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, ShieldCheck, ShieldQuestion, Rss, GitFork, Globe } from "lucide-react";
+import { Plus, Trash2, Rss, GitFork, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { RowItem } from "@/components/ui/row-item";
 import type { BlueprintSource } from "@/lib/ai/schemas";
 
@@ -59,31 +58,17 @@ export function SourceList({
         <RowItem
           key={`${source.url}-${index}`}
           icon={TYPE_ICON[source.type]}
-          title={
-            <span className="flex items-center gap-1.5">
-              {source.name}
-              {source.verified ? (
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" aria-label="Verified reachable" />
-              ) : (
-                <ShieldQuestion className="h-3.5 w-3.5 text-amber-500" aria-label="Unverified suggestion" />
-              )}
-            </span>
-          }
+          title={source.name}
           subtitle={source.url}
           trailing={
-            <>
-              <Badge variant={source.verified ? "success" : "warning"}>
-                {source.verified ? "Verified" : "Unverified"}
-              </Badge>
-              <button
-                type="button"
-                onClick={() => removeSource(index)}
-                className="rounded-md p-1 text-muted hover:bg-surface hover:text-foreground"
-                aria-label={`Remove ${source.name}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => removeSource(index)}
+              className="rounded-md p-1 text-muted hover:bg-surface hover:text-foreground"
+              aria-label={`Remove ${source.name}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           }
         />
       ))}

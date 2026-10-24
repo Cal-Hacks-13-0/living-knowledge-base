@@ -9,7 +9,7 @@ export function KbNav({ knowledgeBaseId }: { knowledgeBaseId: string }) {
   const base = `/kb/${knowledgeBaseId}`;
   const tabs = [
     { href: base, label: "Overview" },
-    { href: `${base}/library`, label: "Library" },
+    { href: `${base}/library`, label: "Vault" },
     { href: `${base}/insights`, label: "Insights" },
     { href: `${base}/sources`, label: "Sources" },
     { href: `${base}/settings`, label: "Settings" },

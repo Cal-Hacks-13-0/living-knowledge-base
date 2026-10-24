@@ -60,7 +60,7 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>What&apos;s in the Knowledge Library</CardTitle>
+            <CardTitle>What&apos;s in the Vault</CardTitle>
             <Link href={`/kb/${id}/library`} className="text-xs font-medium text-accent">
               View all
             </Link>

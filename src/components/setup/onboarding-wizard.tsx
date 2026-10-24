@@ -15,7 +15,6 @@ import { QuestionField } from "./question-field";
 import { PreferencesStep, type WizardPreferences } from "./preferences-step";
 import { CategoryList } from "@/components/blueprint/category-list";
 import { SourceList } from "@/components/blueprint/source-list";
-import { StringListEditor } from "@/components/blueprint/string-list-editor";
 import { apiPost, ApiError } from "@/lib/client/api";
 import type {
   SetupQuestion,
@@ -44,20 +43,24 @@ export function OnboardingWizard() {
   const [goalDraft, setGoalDraft] = useState(goal);
   const [questions, setQuestions] = useState<SetupQuestion[] | null>(null);
   const [questionsLoading, setQuestionsLoading] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Step 1: preferences
   const [preferences, setPreferences] = useState<WizardPreferences>({
     monitoringFrequency: "WEEKLY",
-    sourceTypes: [],
-    additionalNotes: "",
   });
 
   // Steps 2-4: the editable blueprint
   const [blueprint, setBlueprint] = useState<BlueprintResponse | null>(null);
   const [blueprintLoading, setBlueprintLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  // Snapshot of the inputs the current `blueprint` was generated from — lets
+  // us skip a redundant (slow, token-costing) regeneration if the user goes
+  // Back to step 1/2 and returns without actually changing anything.
+  const [blueprintInputsSnapshot, setBlueprintInputsSnapshot] = useState<string | null>(null);
+  const currentBlueprintInputsKey = JSON.stringify({ answers, monitoringFrequency: preferences.monitoringFrequency });
+  const blueprintIsStale = blueprint === null || blueprintInputsSnapshot !== currentBlueprintInputsKey;
 
   async function fetchQuestions(forGoal: string) {
     setQuestionsLoading(true);
@@ -101,8 +104,7 @@ export function OnboardingWizard() {
     const errors: Record<string, string> = {};
     for (const q of questions) {
       const a = answers[q.id];
-      const empty = q.type === "multi_select" ? !Array.isArray(a) || a.length === 0 : !a || (typeof a === "string" && !a.trim());
-      if (empty) errors[q.id] = "This field is required.";
+      if (!a || a.length === 0) errors[q.id] = "Pick at least one option or type your own.";
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -118,6 +120,14 @@ export function OnboardingWizard() {
     }
 
     if (stepIndex === 1) {
+      // Nothing changed since the last time we drafted a blueprint (e.g. the
+      // user went Back just to look, then forward again) — reuse it instead
+      // of burning time/tokens on an identical regeneration.
+      if (!blueprintIsStale) {
+        setStepIndex(2);
+        return;
+      }
+
       setBlueprintLoading(true);
       try {
         const onboardingAnswers: OnboardingAnswer[] = (questions ?? []).map((q) => ({
@@ -133,6 +143,7 @@ export function OnboardingWizard() {
         // Preferences step always wins over the model's own frequency guess —
         // the user explicitly chose a cadence.
         setBlueprint({ ...result, monitoringFrequency: preferences.monitoringFrequency });
+        setBlueprintInputsSnapshot(currentBlueprintInputsKey);
         setStepIndex(2);
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "Failed to generate your blueprint.");
@@ -165,8 +176,6 @@ export function OnboardingWizard() {
         description: blueprint.description,
         preferences: {
           answers: Object.fromEntries((questions ?? []).map((q) => [q.id, answers[q.id]])),
-          sourceTypes: preferences.sourceTypes,
-          additionalNotes: preferences.additionalNotes,
         },
         monitoringFrequency: blueprint.monitoringFrequency,
         categories: blueprint.categories,
@@ -223,7 +232,7 @@ export function OnboardingWizard() {
                     <QuestionField
                       key={q.id}
                       question={q}
-                      value={answers[q.id] ?? (q.type === "multi_select" ? [] : "")}
+                      value={answers[q.id] ?? []}
                       onChange={(value) => setAnswers((a) => ({ ...a, [q.id]: value }))}
                       error={fieldErrors[q.id]}
                     />
@@ -248,7 +257,7 @@ export function OnboardingWizard() {
           {stepIndex === 2 && blueprint && (
             <>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Step 3. Review your knowledge structure</h1>
+                <h1 className="text-xl font-semibold text-foreground">Step 3. Review your blueprint</h1>
                 <p className="mt-1 text-sm text-muted">Edit the name, description, and categories before continuing.</p>
               </div>
               <div className="flex flex-col gap-3">
@@ -275,7 +284,7 @@ export function OnboardingWizard() {
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Step 4. Choose your sources</h1>
                 <p className="mt-1 text-sm text-muted">
-                  Sources marked <strong>Verified</strong> are confirmed reachable; others are AI suggestions to review.
+                  AI-suggested sources to monitor — remove any you don&apos;t want, or add your own.
                 </p>
               </div>
               <SourceList sources={blueprint.sources} onChange={(sources) => setBlueprint({ ...blueprint, sources })} />
@@ -300,24 +309,6 @@ export function OnboardingWizard() {
                 </div>
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div>
-                  <Label>Research priorities</Label>
-                  <StringListEditor
-                    items={blueprint.researchPriorities}
-                    onChange={(researchPriorities) => setBlueprint({ ...blueprint, researchPriorities })}
-                    placeholder="Add priority"
-                  />
-                </div>
-                <div>
-                  <Label>Maintenance rules</Label>
-                  <StringListEditor
-                    items={blueprint.maintenanceRules}
-                    onChange={(maintenanceRules) => setBlueprint({ ...blueprint, maintenanceRules })}
-                    placeholder="Add rule"
-                  />
-                </div>
-              </div>
             </>
           )}
 
@@ -338,6 +329,16 @@ export function OnboardingWizard() {
                 {blueprintLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" /> Drafting your blueprint…
+                  </>
+                ) : stepIndex === 1 && !blueprintIsStale ? (
+                  // Nothing changed since the blueprint was last drafted — this
+                  // click will just navigate forward, not regenerate anything.
+                  <>
+                    Next <ArrowRight className="h-4 w-4" />
+                  </>
+                ) : stepIndex === 1 ? (
+                  <>
+                    Drafting your blueprint <ArrowRight className="h-4 w-4" />
                   </>
                 ) : (
                   <>

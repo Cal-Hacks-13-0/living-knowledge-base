@@ -99,9 +99,6 @@ export function CategoryList({
                     <DropdownMenuItem onSelect={() => setEditingIndex(index)}>
                       <Pencil className="h-3.5 w-3.5" /> Rename / edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => addSubtopic(index)}>
-                      <Plus className="h-3.5 w-3.5" /> Add subtopic
-                    </DropdownMenuItem>
                     <DropdownMenuItem destructive onSelect={() => removeCategory(index)}>
                       <Trash2 className="h-3.5 w-3.5" /> Delete category
                     </DropdownMenuItem>
@@ -111,27 +108,33 @@ export function CategoryList({
             />
           )}
 
-          {category.subtopics.length > 0 && (
-            <div className="flex flex-col gap-1.5 border-t border-border px-3 py-2 pl-10">
-              {category.subtopics.map((sub, subIndex) => (
-                <div key={subIndex} className="flex items-center gap-2">
-                  <span className="text-muted">·</span>
-                  <Input
-                    value={sub.name}
-                    onChange={(e) => updateSubtopic(index, subIndex, e.target.value)}
-                    className="h-7 text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeSubtopic(index, subIndex)}
-                    className="text-muted hover:text-foreground"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-1.5 border-t border-border px-3 py-2 pl-10">
+            {category.subtopics.map((sub, subIndex) => (
+              <div key={subIndex} className="flex items-center gap-2">
+                <span className="text-muted">·</span>
+                <Input
+                  value={sub.name}
+                  onChange={(e) => updateSubtopic(index, subIndex, e.target.value)}
+                  className="h-7 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSubtopic(index, subIndex)}
+                  className="text-muted hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            {/* Always-visible, Microsoft-Forms-style "+ Add" — not buried in the "..." menu. */}
+            <button
+              type="button"
+              onClick={() => addSubtopic(index)}
+              className="flex items-center gap-1.5 self-start py-1 text-sm text-accent hover:underline"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add subtopic
+            </button>
+          </div>
         </div>
       ))}
       <Button variant="secondary" type="button" onClick={addCategory} className="self-start">

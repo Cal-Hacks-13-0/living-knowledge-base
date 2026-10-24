@@ -27,13 +27,9 @@ export default async function SourcesPage({ params }: { params: Promise<{ id: st
                   <div className="mb-1 flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground">{source.name}</p>
                     <Badge variant="neutral">{source.type.replace("_", " ")}</Badge>
-                    <Badge
-                      variant={
-                        source.status === "ACTIVE" ? "success" : source.status === "ERROR" ? "danger" : "neutral"
-                      }
-                    >
-                      {source.status}
-                    </Badge>
+                    {source.status !== "ERROR" && (
+                      <Badge variant={source.status === "ACTIVE" ? "success" : "neutral"}>{source.status}</Badge>
+                    )}
                   </div>
                   <p className="break-all text-xs text-muted">{source.url}</p>
                   <p className="mt-1 text-xs text-muted">
@@ -42,7 +38,6 @@ export default async function SourcesPage({ params }: { params: Promise<{ id: st
                     {source.lastSuccessfulFetchAt &&
                       ` · last success ${formatDateTime(source.lastSuccessfulFetchAt)}`}
                   </p>
-                  {source.lastError && <p className="mt-1 text-xs text-red-600">{source.lastError}</p>}
                 </div>
               </CardContent>
             </Card>
