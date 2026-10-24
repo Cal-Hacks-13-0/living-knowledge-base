@@ -251,3 +251,9 @@ treated as production-ready multi-user security.
   blueprint generation, and the extraction/comparison/insight steps of a research run.
   Get one at https://console.anthropic.com/. Nothing else needs a credential — RSS and
   GitHub Releases fetching use public, unauthenticated endpoints.
+
+
+  ## 9. Authors
+
+- [Ellie Du](https://github.com/ellied07)
+- [Huierpeng](https://github.com/huier2006-a11y)
