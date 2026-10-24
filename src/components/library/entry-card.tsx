@@ -21,7 +21,8 @@ export function EntryCard({ entry }: { entry: EntryCardData }) {
       <CardHeader className="flex-row items-start justify-between gap-2">
         <div>
           <div className="mb-1 flex items-center gap-2">
-            {entry.category && <Badge variant="neutral">{entry.category.name}</Badge>}
+            {/* Category is conveyed by the section heading this card is grouped under
+                (see LibraryBrowser) — no need to repeat it on every card. */}
             <Badge variant={entry.status === "VERIFIED" ? "success" : entry.status === "OUTDATED" ? "warning" : "neutral"}>
               {entry.status}
             </Badge>

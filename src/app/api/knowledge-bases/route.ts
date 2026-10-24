@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ok, fail, handleApiError } from "@/lib/api/response";
 import { CreateKnowledgeBaseRequestSchema, validateUrl } from "@/lib/validation/schemas";
 import { syncJobForKnowledgeBase } from "@/lib/jobs/scheduler";
+import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 
 export async function GET() {
   try {
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
     if (knowledgeBase.monitoringFrequency !== "MANUAL") {
       syncJobForKnowledgeBase(knowledgeBase.id, knowledgeBase.monitoringFrequency);
     }
+    await syncKnowledgeBaseToVaultSafe(knowledgeBase.id);
 
     return ok(knowledgeBase, 201);
   } catch (err) {

@@ -209,6 +209,32 @@ unexpected).
 | POST | `/api/proposals/:id/reject` | No changes applied |
 | GET | `/api/search` | `?q=` — cross-KB keyword search over knowledge entries, powers the sidebar Search page |
 | POST | `/api/knowledge-bases/:id/chat` | `{message, history}` → `{reply}` — the AI Assistant panel; retrieval-grounded, ephemeral (history is client-held, nothing persisted server-side) |
+| POST | `/api/knowledge-bases/:id/vault/sync` | Manual Markdown vault resync (it already auto-syncs after every mutation — see §5a) |
+
+### 5a. Markdown vault — Obsidian / filesystem-agent access
+
+Every knowledge base also exists as a plain folder of Markdown files under `VAULT_DIR`
+(default `./vault`, one subfolder per KB), auto-regenerated after every mutation
+(research runs, proposal approve/reject, insight status changes, source/KB edits). SQLite
+remains the source of truth — the vault is a synced, read-through export, not a second
+database — but it means any file-based tool (Obsidian, `grep`/`rg`, another LLM agent
+with filesystem access) can read a knowledge base directly, with no app running:
+
+```
+vault/<kb-name>-<id>/
+  _Overview.md       KB name, goal, description, [[category]] and source links
+  01_Sources/         one file per tracked source + its fetched documents
+  02_Knowledge/<category>/   one file per knowledge entry (Obsidian [[wikilinks]] to its category)
+  03_Insights/        one file per insight, with evidence links
+  04_Proposals/        one file per pending/reviewed change proposal
+```
+
+Implementation: `src/lib/vault/` (`paths.ts`, `markdown.ts`, `sync.ts`). Each sync is a
+full, idempotent rewrite of one KB's folder (not an incremental patch) — simple and
+correct, cheap at MVP scale. Renaming a KB renames its folder in place (detected by
+matching the `id:` frontmatter in `_Overview.md`) instead of leaving an orphaned
+duplicate. The vault path and a manual "Re-sync now" button are shown on each KB's
+Settings tab.
 
 This is **single-user local mode**: there is no authentication, and any request can read
 or modify any knowledge base. This is explicitly out of scope for the MVP and must not be

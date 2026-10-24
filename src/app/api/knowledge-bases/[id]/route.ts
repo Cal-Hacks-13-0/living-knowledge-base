@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ok, handleApiError, NotFoundError } from "@/lib/api/response";
 import { UpdateKnowledgeBaseRequestSchema } from "@/lib/validation/schemas";
 import { syncJobForKnowledgeBase, unscheduleKnowledgeBase } from "@/lib/jobs/scheduler";
+import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -46,6 +47,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         syncJobForKnowledgeBase(id, body.monitoringFrequency);
       }
     }
+
+    await syncKnowledgeBaseToVaultSafe(id);
 
     return ok(updated);
   } catch (err) {

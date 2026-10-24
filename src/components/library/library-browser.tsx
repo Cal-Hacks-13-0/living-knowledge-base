@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EntryCard, type EntryCardData } from "./entry-card";
+import { CategoryManager, type ManagedCategory } from "./category-manager";
 import { apiGet } from "@/lib/client/api";
+
+const UNCATEGORIZED_KEY = "__uncategorized__";
 
 export function LibraryBrowser({
   knowledgeBaseId,
@@ -15,30 +18,53 @@ export function LibraryBrowser({
 }: {
   knowledgeBaseId: string;
   initialEntries: EntryCardData[];
-  categories: Array<{ id: string; name: string }>;
+  categories: ManagedCategory[];
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [entries, setEntries] = useState(initialEntries);
+  const [searchResults, setSearchResults] = useState<EntryCardData[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const trimmedSearch = search.trim();
+  const entries = trimmedSearch ? (searchResults ?? initialEntries) : initialEntries;
 
   useEffect(() => {
+    if (!trimmedSearch) return; // nothing to debounce — `entries` already falls back to initialEntries
     const handle = setTimeout(async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        if (search.trim()) params.set("search", search.trim());
-        if (categoryId) params.set("categoryId", categoryId);
         const result = await apiGet<EntryCardData[]>(
-          `/api/knowledge-bases/${knowledgeBaseId}/entries?${params.toString()}`
+          `/api/knowledge-bases/${knowledgeBaseId}/entries?search=${encodeURIComponent(trimmedSearch)}`
         );
-        setEntries(result);
+        setSearchResults(result);
       } finally {
         setLoading(false);
       }
     }, 250);
     return () => clearTimeout(handle);
-  }, [search, categoryId, knowledgeBaseId]);
+  }, [trimmedSearch, knowledgeBaseId]);
+
+  const groups = useMemo(() => {
+    const byCategory = new Map<string, EntryCardData[]>();
+    for (const entry of entries) {
+      const key = entry.category?.id ?? UNCATEGORIZED_KEY;
+      if (!byCategory.has(key)) byCategory.set(key, []);
+      byCategory.get(key)!.push(entry);
+    }
+    const isSearching = trimmedSearch.length > 0;
+    const ordered = categories
+      .map((c) => ({ id: c.id, name: c.name, entries: byCategory.get(c.id) ?? [] }))
+      .filter((g) => !isSearching || g.entries.length > 0);
+    const uncategorized = byCategory.get(UNCATEGORIZED_KEY) ?? [];
+    if (uncategorized.length > 0) {
+      ordered.push({ id: UNCATEGORIZED_KEY, name: "Uncategorized", entries: uncategorized });
+    }
+    return ordered;
+  }, [entries, categories, trimmedSearch]);
+
+  // Show the empty state only when there's truly nothing to display — if
+  // categories exist, show the (possibly all-empty) category structure
+  // instead, since that's useful on its own ("展示应按照category来").
+  const nothingToShow = trimmedSearch ? entries.length === 0 : entries.length === 0 && categories.length === 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -52,25 +78,33 @@ export function LibraryBrowser({
             className="pl-8"
           />
         </div>
-        <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-56">
-          <option value="">All categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
       </div>
 
-      {entries.length === 0 ? (
+      <CategoryManager knowledgeBaseId={knowledgeBaseId} categories={categories} onChanged={() => router.refresh()} />
+
+      {nothingToShow ? (
         <EmptyState
           title={loading ? "Searching…" : "No knowledge entries found"}
-          description={loading ? undefined : "Run research to populate your knowledge library, or adjust your filters."}
+          description={loading ? undefined : "Run research to populate your knowledge library, or adjust your search."}
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {entries.map((entry) => (
-            <EntryCard key={entry.id} entry={entry} />
+        <div className="flex flex-col gap-8">
+          {groups.map((group) => (
+            <section key={group.id}>
+              <div className="mb-3 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-foreground">{group.name}</h2>
+                <span className="text-xs text-muted">({group.entries.length})</span>
+              </div>
+              {group.entries.length === 0 ? (
+                <p className="text-sm text-muted">No entries in this category yet.</p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {group.entries.map((entry) => (
+                    <EntryCard key={entry.id} entry={entry} />
+                  ))}
+                </div>
+              )}
+            </section>
           ))}
         </div>
       )}

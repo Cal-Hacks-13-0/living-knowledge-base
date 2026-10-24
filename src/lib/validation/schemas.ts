@@ -63,6 +63,12 @@ export const CreateSourceRequestSchema = z.object({
   type: SourceTypeSchema,
 });
 
+// --- /api/knowledge-bases/:id/categories (POST) -----------------------------
+export const CreateCategoryRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).default(""),
+});
+
 // --- /api/insights/:id (PATCH) ----------------------------------------------
 export const UpdateInsightRequestSchema = z.object({
   status: z.enum(["PENDING", "SAVED", "DISMISSED", "ACTIONED"]),

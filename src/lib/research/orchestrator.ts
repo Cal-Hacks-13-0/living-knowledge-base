@@ -10,6 +10,7 @@ import {
   matchCategoryByTopics,
 } from "@/lib/knowledge/repository";
 import { createChangeProposal } from "@/lib/knowledge/versioning";
+import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 import { fetchRssSource } from "./rss-fetcher";
 import { fetchGithubReleases } from "./github-fetcher";
 import { fetchHtmlSource } from "./html-fetcher";
@@ -284,6 +285,9 @@ export async function runResearch(
     throw err;
   } finally {
     void trigger; // retained for logging/analytics symmetry with scheduled runs
+    // Resync the Markdown vault regardless of outcome — even a partial/failed
+    // run may have stored new documents/entries worth reflecting on disk.
+    await syncKnowledgeBaseToVaultSafe(knowledgeBaseId);
   }
 }
 

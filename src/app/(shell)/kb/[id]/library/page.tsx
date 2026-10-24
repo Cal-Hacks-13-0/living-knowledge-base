@@ -14,7 +14,11 @@ export default async function LibraryPage({ params }: { params: Promise<{ id: st
         insightEvidence: { include: { insight: { select: { id: true, title: true } } } },
       },
     }),
-    prisma.knowledgeCategory.findMany({ where: { knowledgeBaseId: id, parentId: null }, orderBy: { name: "asc" } }),
+    prisma.knowledgeCategory.findMany({
+      where: { knowledgeBaseId: id, parentId: null },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { entries: true } } },
+    }),
   ]);
 
   return <LibraryBrowser knowledgeBaseId={id} initialEntries={entries} categories={categories} />;

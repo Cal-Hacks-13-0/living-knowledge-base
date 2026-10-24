@@ -60,7 +60,12 @@ export async function findRelevantEntries(
 
 export async function matchCategoryByTopics(knowledgeBaseId: string, topics: string[]) {
   if (topics.length === 0) return null;
-  const categories = await prisma.knowledgeCategory.findMany({ where: { knowledgeBaseId } });
+  // Only match against top-level categories — the structure the user confirmed
+  // at setup (or edited later from the Library tab). Matching against
+  // subtopics too caused entries to get tagged with categories that don't
+  // appear anywhere in the Library's category list/filter, which looked like
+  // the categorization was randomly inconsistent with what was set up.
+  const categories = await prisma.knowledgeCategory.findMany({ where: { knowledgeBaseId, parentId: null } });
   const lowerTopics = topics.map((t) => t.toLowerCase());
   for (const category of categories) {
     const name = category.name.toLowerCase();

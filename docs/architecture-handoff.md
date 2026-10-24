@@ -324,3 +324,30 @@ route list are now:
 All conventions in §4 (API envelope, server-components-query-Prisma-directly,
 `lib/client/api.ts` for client mutations, `router.refresh()` after writes) were kept
 as-is for every new page/route above — nothing new was introduced.
+
+## 12. Markdown vault (2026-10-24)
+
+`src/lib/vault/` syncs every knowledge base to a plain Markdown folder tree under
+`VAULT_DIR` (default `./vault`), so Obsidian or any filesystem-reading agent can consume
+a knowledge base without going through the app/API at all.
+
+- `paths.ts` — `vaultRoot()` (reads `process.env.VAULT_DIR` at call time, not module
+  load, so tests can override it), slug-based file/folder naming.
+- `markdown.ts` — pure render functions (one per entity: KB overview, entry, insight,
+  source, proposal) producing frontmatter + body. Frontmatter string values are
+  `JSON.stringify`'d rather than hand-quoted YAML — sidesteps quoting edge cases, still
+  valid YAML.
+- `sync.ts` — `syncKnowledgeBaseToVault(id)` does a **full rewrite** of one KB's folder
+  from current DB state (not an incremental patch) — correct and simple at MVP scale.
+  Detects the existing folder via each `_Overview.md`'s `id:` frontmatter and renames it
+  in place on a KB rename, rather than leaving an orphaned duplicate.
+  `syncKnowledgeBaseToVaultSafe` wraps it to log-and-swallow errors, since a vault write
+  failure must never fail the API request whose DB write already succeeded.
+- Wired into every mutation: KB create/update, source add, insight status change,
+  proposal approve/reject, and `orchestrator.runResearch`'s `finally` block (so even a
+  partial/failed run's new documents/entries still get reflected).
+- **Test isolation gotcha**: several tests call `runResearch`/the KB API routes directly,
+  which now also trigger a vault sync as a side effect. `tests/setup.ts` sets a global
+  `VAULT_DIR` override (`.vitest-vault/`, gitignored) so no test run ever writes into the
+  real project `vault/` folder. `tests/unit/vault-sync.test.ts` narrows further to its
+  own temp dir for precise assertions.

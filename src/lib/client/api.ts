@@ -51,3 +51,8 @@ export async function apiPatch<T>(url: string, payload: unknown): Promise<T> {
   });
   return handle<T>(res);
 }
+
+export async function apiDelete<T>(url: string): Promise<T> {
+  const res = await fetch(url, { method: "DELETE" });
+  return handle<T>(res);
+}

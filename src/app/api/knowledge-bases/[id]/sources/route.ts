@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { ok, fail, handleApiError, NotFoundError } from "@/lib/api/response";
 import { CreateSourceRequestSchema, validateUrl } from "@/lib/validation/schemas";
+import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const source = await prisma.source.create({
       data: { knowledgeBaseId: id, name: body.name, url: body.url, type: body.type },
     });
+    await syncKnowledgeBaseToVaultSafe(id);
     return ok(source, 201);
   } catch (err) {
     return handleApiError(err);

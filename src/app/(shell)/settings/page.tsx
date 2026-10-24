@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { isAiConfigured } from "@/lib/ai/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { vaultRoot } from "@/lib/vault/paths";
 
 export default async function GlobalSettingsPage() {
   const knowledgeBases = await prisma.knowledgeBase.findMany({
@@ -46,6 +47,19 @@ export default async function GlobalSettingsPage() {
               Single-user local mode — there is no authentication. Everything here lives in your local SQLite
               database (<code className="rounded bg-surface px-1 py-0.5">prisma/dev.db</code>).
             </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Markdown vault</CardTitle>
+            <CardDescription>
+              A synced, Obsidian-readable folder of every knowledge base — one subfolder per KB, kept up to date
+              automatically. Per-KB sync status and a manual resync button live on each KB&apos;s Settings tab.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <code className="break-all rounded-md bg-surface px-2 py-1.5 text-xs text-foreground">{vaultRoot()}</code>
           </CardContent>
         </Card>
 
