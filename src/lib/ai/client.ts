@@ -109,6 +109,89 @@ export async function generateStructured<T extends z.ZodTypeAny>({
   );
 }
 
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  inputSchema: z.ZodTypeAny;
+}
+
+/**
+ * Runs an agentic tool-use loop: Claude may call any of `tools` zero or more
+ * times (each call routed through `executeTool`), and the loop feeds each
+ * tool's result back until the model produces a final text reply or
+ * `maxIterations` is hit. Used by the AI Assistant chat, which can fetch a
+ * URL into the knowledge base or trigger a research run on request — see
+ * lib/ai/assistant-tools.ts for what the tools actually do.
+ *
+ * `executeTool` is trusted to apply its own safety checks (e.g. the fetch
+ * tool goes through the same SSRF-guarded safeFetch as everything else);
+ * this loop itself only bounds *how many* tool calls one turn can make.
+ */
+export async function generateWithTools({
+  system,
+  initialPrompt,
+  tools,
+  executeTool,
+  maxIterations = 4,
+  maxTokens = 1024,
+  model = DEFAULT_MODEL,
+}: {
+  system: string;
+  initialPrompt: string;
+  tools: ToolDefinition[];
+  executeTool: (name: string, input: unknown) => Promise<string>;
+  maxIterations?: number;
+  maxTokens?: number;
+  model?: string;
+}): Promise<string> {
+  const anthropic = getClient();
+
+  const anthropicTools: Anthropic.Tool[] = tools.map((t) => {
+    const jsonSchema = z.toJSONSchema(t.inputSchema, { target: "draft-7" }) as Record<string, unknown>;
+    delete jsonSchema.$schema;
+    return { name: t.name, description: t.description, input_schema: jsonSchema as Anthropic.Tool.InputSchema };
+  });
+
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: initialPrompt }];
+
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    const response = await anthropic.messages.create({
+      model,
+      max_tokens: maxTokens,
+      system,
+      tools: anthropicTools,
+      messages,
+    });
+
+    messages.push({ role: "assistant", content: response.content });
+
+    const toolUses = response.content.filter(
+      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+    );
+
+    if (toolUses.length === 0) {
+      const textBlock = response.content.find(
+        (block): block is Anthropic.TextBlock => block.type === "text"
+      );
+      return textBlock?.text ?? "";
+    }
+
+    const toolResults: Anthropic.ToolResultBlockParam[] = [];
+    for (const toolUse of toolUses) {
+      let resultText: string;
+      try {
+        resultText = await executeTool(toolUse.name, toolUse.input);
+      } catch (err) {
+        resultText = `Error: ${err instanceof Error ? err.message : String(err)}`;
+      }
+      toolResults.push({ type: "tool_result", tool_use_id: toolUse.id, content: resultText });
+    }
+    messages.push({ role: "user", content: toolResults });
+  }
+
+  return "I tried a few steps to do that but didn't finish — could you try again, maybe with a smaller request?";
+}
+
 /** Plain text generation, for cases that don't need structured output. */
 export async function generateText({
   system,

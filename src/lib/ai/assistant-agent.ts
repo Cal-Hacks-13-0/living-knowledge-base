@@ -1,60 +1,105 @@
-import { generateText } from "./client";
+import { generateWithTools } from "./client";
+import { buildAssistantTools } from "./assistant-tools";
 
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
 
+export interface AssistantKnowledgeBaseSummary {
+  id: string;
+  name: string;
+  userGoal: string;
+}
+
 export interface AssistantContextEntry {
+  knowledgeBaseName: string;
   title: string;
   summary: string;
 }
 
 export interface AssistantContextInsight {
+  knowledgeBaseName: string;
   title: string;
-  summary: string;
   type: string;
+  summary: string;
 }
 
-const SYSTEM_PROMPT = `You are the AI Assistant embedded in one specific Living Knowledge Base
-workspace. You help the user understand and navigate what has already been researched and
-stored for THIS knowledge base only.
+export interface AssistantAnswer {
+  reply: string;
+  suggestedKnowledgeBase: { goal: string } | null;
+}
+
+const SYSTEM_PROMPT = `You are the AI Assistant for "Living Knowledge Base" — a global assistant
+that works across ALL of the user's knowledge bases, not just one. You help the user
+understand what's already been researched, and you can take action on their behalf:
+
+1. fetch_and_archive_url — when the user shares/pastes a URL and wants it added to one of
+   their EXISTING knowledge bases, fetch it and archive it rather than just describing
+   what you'd do. You must pick which knowledgeBaseId it belongs to — use the one the
+   user names, or the one they're currently viewing if given, or ask them to clarify if
+   it's genuinely ambiguous. Never guess a knowledgeBaseId that wasn't given to you.
+2. run_research_now — when the user asks to check for updates, fetch the latest content,
+   or refresh a knowledge base, actually run it rather than just describing what a
+   research run would do. This can take a while (up to a couple minutes) — let the user
+   know that when you use it.
+3. propose_new_knowledge_base — when the user describes wanting to track/learn/build
+   something that ISN'T one of their existing knowledge bases (a genuinely new topic),
+   call this instead of fetch_and_archive_url/run_research_now. It shows the user a
+   confirmation card to start the creation flow with their goal pre-filled — it does not
+   create anything itself, so never say a new knowledge base was created.
 
 Rules:
-- Answer using only the knowledge context provided below. If the context doesn't cover
-  the question, say so plainly instead of guessing or inventing facts.
-- When you reference something from the context, name the entry/insight title so the user
-  can find it in the Library or Insights tab.
+- For plain questions (no action requested), answer using only the knowledge context
+  provided below. If the context doesn't cover the question, say so plainly instead of
+  guessing or inventing facts.
+- When you reference something from the context, name both the knowledge base and the
+  entry/insight title so the user can find it.
+- After using a tool, summarize what actually happened (the tool's result) in your own
+  words — don't just repeat it verbatim, and don't claim something succeeded if the tool
+  result says otherwise.
 - Be concise — this is a sidebar chat, not a report.`;
 
-export async function answerKnowledgeBaseQuestion({
-  knowledgeBaseName,
-  userGoal,
+export async function answerAssistantQuestion({
+  knowledgeBases,
+  currentKnowledgeBaseId,
   message,
   history,
   relevantEntries,
   recentInsights,
 }: {
-  knowledgeBaseName: string;
-  userGoal: string;
+  knowledgeBases: AssistantKnowledgeBaseSummary[];
+  currentKnowledgeBaseId: string | null;
   message: string;
   history: ChatMessage[];
   relevantEntries: AssistantContextEntry[];
   recentInsights: AssistantContextInsight[];
-}): Promise<string> {
-  const contextBlock = `Knowledge base: "${knowledgeBaseName}" (goal: "${userGoal}")
+}): Promise<AssistantAnswer> {
+  const currentKb = knowledgeBases.find((kb) => kb.id === currentKnowledgeBaseId) ?? null;
 
-Relevant knowledge entries:
+  const contextBlock = `The user's knowledge bases (id | name | goal):
+${
+  knowledgeBases.length > 0
+    ? knowledgeBases.map((kb) => `- ${kb.id} | ${kb.name} | ${kb.userGoal}`).join("\n")
+    : "(the user has no knowledge bases yet)"
+}
+
+${
+  currentKb
+    ? `The user is currently viewing: "${currentKb.name}" (id: ${currentKb.id}) — default to this one if they don't specify which knowledge base they mean.\n`
+    : "The user is not currently viewing any specific knowledge base.\n"
+}
+Relevant knowledge entries across all knowledge bases:
 ${
   relevantEntries.length > 0
-    ? relevantEntries.map((e) => `- ${e.title}: ${e.summary}`).join("\n")
+    ? relevantEntries.map((e) => `- [${e.knowledgeBaseName}] ${e.title}: ${e.summary}`).join("\n")
     : "(no matching entries found)"
 }
 
-Recent insights:
+Recent insights across all knowledge bases:
 ${
   recentInsights.length > 0
-    ? recentInsights.map((i) => `- [${i.type}] ${i.title}: ${i.summary}`).join("\n")
+    ? recentInsights.map((i) => `- [${i.knowledgeBaseName}][${i.type}] ${i.title}: ${i.summary}`).join("\n")
     : "(none)"
 }`;
 
@@ -68,7 +113,22 @@ ${
 ${conversation ? `Conversation so far:\n${conversation}\n` : ""}
 User: ${message}
 
-Respond as the Assistant.`;
+Respond as the Assistant. Use a tool if the user's message calls for one.`;
 
-  return generateText({ system: SYSTEM_PROMPT, prompt, maxTokens: 1024 });
+  let suggestedKnowledgeBase: { goal: string } | null = null;
+  const { definitions, execute } = buildAssistantTools({
+    onProposeKnowledgeBase: (goal) => {
+      suggestedKnowledgeBase = { goal };
+    },
+  });
+
+  const reply = await generateWithTools({
+    system: SYSTEM_PROMPT,
+    initialPrompt: prompt,
+    tools: definitions,
+    executeTool: execute,
+    maxTokens: 1024,
+  });
+
+  return { reply, suggestedKnowledgeBase };
 }

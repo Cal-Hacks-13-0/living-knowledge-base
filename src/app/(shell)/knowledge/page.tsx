@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { AiAssistantTrigger } from "@/components/assistant/ai-assistant-trigger";
 import { timeAgo } from "@/lib/utils";
 import { BookOpen, Sparkles } from "lucide-react";
 
@@ -22,11 +23,14 @@ export default async function HomePage() {
             Single-user local mode — everything here lives in your local SQLite database.
           </p>
         </div>
-        <Link href="/new">
-          <Button>
-            <Sparkles className="h-4 w-4" /> New knowledge base
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <AiAssistantTrigger />
+          <Link href="/new">
+            <Button>
+              <Sparkles className="h-4 w-4" /> New knowledge base
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {knowledgeBases.length === 0 ? (

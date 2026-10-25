@@ -3,13 +3,8 @@ import { isAiConfigured } from "@/lib/ai/client";
 import { extractKnowledge } from "@/lib/ai/extraction-agent";
 import { generateInsights, type InsightFinding } from "@/lib/ai/insight-agent";
 import { compareAgainstExisting } from "@/lib/knowledge/comparison";
-import {
-  createDraftEntry,
-  getKnowledgeBaseOrThrow,
-  listMonitorableSources,
-  matchCategoryByTopics,
-} from "@/lib/knowledge/repository";
-import { createChangeProposal } from "@/lib/knowledge/versioning";
+import { getKnowledgeBaseOrThrow, listMonitorableSources } from "@/lib/knowledge/repository";
+import { applyComparisonClassification } from "@/lib/knowledge/classification";
 import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 import { fetchRssSource } from "./rss-fetcher";
 import { fetchGithubReleases } from "./github-fetcher";
@@ -169,37 +164,16 @@ export async function runResearch(
           findingMeta.push({ sourceDocumentId, extraction, comparison });
 
           // Knowledge update rules: safe to auto-apply (new drafts), unsafe
-          // operations become a proposal awaiting user review.
-          if (comparison.classification === "DUPLICATE") {
-            continue;
-          }
-          if (comparison.classification === "UNRELATED" || comparison.classification === "EXTENSION") {
-            const category = await matchCategoryByTopics(knowledgeBaseId, extraction.topics);
-            await createDraftEntry({
-              knowledgeBaseId,
-              categoryId: category?.id ?? null,
-              title: doc.title,
-              summary: extraction.summary,
-              content: extraction.keyClaims.join("\n") || extraction.summary,
-              sourceDocumentId,
-            });
-          } else if (
-            comparison.classification === "CONTRADICTION" ||
-            comparison.classification === "REPLACEMENT_CANDIDATE"
-          ) {
-            await createChangeProposal({
-              knowledgeBaseId,
-              insightId: null,
-              targetEntryId: comparison.relatedEntryId,
-              operation: comparison.proposedChange?.operation ?? "UPDATE",
-              proposed: {
-                title: comparison.proposedChange?.proposedTitle ?? doc.title,
-                summary: comparison.proposedChange?.proposedSummary ?? extraction.summary,
-                content: comparison.proposedChange?.proposedContent ?? extraction.summary,
-              },
-              explanation: comparison.explanation,
-            });
-          }
+          // operations become a proposal awaiting user review — see
+          // lib/knowledge/classification.ts (shared with the AI Assistant's
+          // "archive this URL" tool so both paths apply identical rules).
+          await applyComparisonClassification({
+            knowledgeBaseId,
+            title: doc.title,
+            extraction,
+            comparison,
+            sourceDocumentId,
+          });
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
           runNotes.push(`AI processing failed for "${doc.title}": ${message}`);

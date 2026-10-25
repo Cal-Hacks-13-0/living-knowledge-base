@@ -75,12 +75,16 @@ export const UpdateInsightRequestSchema = z.object({
 });
 
 // --- /api/knowledge-bases/:id/chat (POST) -----------------------------------
+// --- /api/assistant/chat (POST) ---------------------------------------------
 export const ChatRequestSchema = z.object({
   message: z.string().min(1).max(2000),
   history: z
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() }))
     .max(20)
     .default([]),
+  // The KB the user happens to be viewing, if any — a default hint for the
+  // assistant's tools, not a hard scope. The assistant is global.
+  currentKnowledgeBaseId: z.string().optional(),
 });
 
 export function validateUrl(rawUrl: string): { ok: true } | { ok: false; error: string } {
