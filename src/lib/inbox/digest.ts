@@ -7,10 +7,11 @@ import { listInboxEvents, type InboxEventWithRefs } from "./events";
 
 /**
  * AI write-ups of the Inbox for "this week" (the last 7 days, in UTC days):
- * a one-or-two-sentence overview, and an on-demand detailed review. Both are
- * generated only from recorded Inbox events and cached in InboxDigest under a
- * fingerprint of those events, so they're regenerated exactly when an event in
- * the range is added or changes status.
+ * 2-3 standout findings shown at the top, and a separate, more complete
+ * weekly review available on demand. Both are generated only from recorded
+ * Inbox events and cached in InboxDigest under a fingerprint of those
+ * events, so they're regenerated exactly when an event in the range is
+ * added or changes status.
  */
 
 export const WEEK_DAYS = 7;
@@ -67,8 +68,32 @@ const RULES = `Rules:
 - Write to the user as "you".
 - Call the user's collection a "knowledge vault" (never "knowledge base").`;
 
-const OverviewSchema = z.object({
-  overview: z.string().min(1).max(420).describe("One or two sentences on the most meaningful changes this week."),
+const FindingsSchema = z.object({
+  overview: z
+    .string()
+    .min(1)
+    .max(500)
+    .describe(
+      "3-4 sentences of scene-setting context for the week: roughly what happened, which vaults were active, and the general themes — e.g. 'You added 25 new notes this week. Your X vault grew with...'. This is broader and less specific than the findings below; it should not just restate them."
+    ),
+  findings: z
+    .array(
+      z.object({
+        statement: z
+          .string()
+          .min(1)
+          .max(220)
+          .describe(
+            "One complete, standalone sentence stating a real, specific conclusion — a meaningful change, development, milestone, or connection. Never a count or category summary."
+          ),
+        eventIds: z
+          .array(z.string())
+          .min(1)
+          .describe("IDs of every event this statement is directly based on — cite all of them if the finding connects multiple sources."),
+      })
+    )
+    .max(3)
+    .describe("0 to 3 genuinely meaningful findings — fewer, even zero, is correct when nothing this week clears that bar."),
 });
 
 const ReviewSchema = z.object({
@@ -84,8 +109,14 @@ const ReviewSchema = z.object({
     .max(5),
 });
 
-export interface OverviewDigest {
+export interface Finding {
+  statement: string;
+  eventIds: string[];
+}
+
+export interface FindingsDigest {
   overview: string;
+  findings: Finding[];
 }
 
 export interface ReviewSection {
@@ -98,14 +129,28 @@ export interface ReviewDigest {
   sections: ReviewSection[];
 }
 
-async function generateOverview(events: InboxEventWithRefs[]): Promise<OverviewDigest> {
+async function generateFindings(events: InboxEventWithRefs[]): Promise<FindingsDigest> {
   const result = await generateStructured({
-    system: `You write the one-paragraph weekly overview at the top of Axion's Inbox, a feed of changes to the user's knowledge vaults.\n${RULES}\n- One or two sentences, at most about 60 words. Lead with the most meaningful change.`,
-    prompt: `This week's recorded Inbox events (JSON):\n${JSON.stringify(eventsForPrompt(events))}\n\nCall emit_result with the overview.`,
-    schema: OverviewSchema,
-    maxTokens: 400,
+    system: `You write the top of Axion's Inbox: a short scene-setting overview, followed by the 2-3 standout findings a user actually needs to read to understand their week, before they'd ever scroll to the full updates list.
+${RULES}
+- overview: 3-4 sentences of broader context — roughly what happened, which vaults were active, the general themes. This is scene-setting, not a specific conclusion; it should not just restate the findings below in different words.
+- findings: each is ONE complete, specific sentence that reads on its own, in the style of a sharp news brief — for example: "The literature vault now connects a scholarly journal, a literary archive, and a specific Joyce discovery." or "“Russian Roulette” became Red Velvet's third music video to cross 300 million views."
+- A finding states a real conclusion: a meaningful change, development, milestone, or connection across sources — never a count or category summary like "three sources were added" or "the vault grew" (that belongs in the overview, not here).
+- Do not use unsupported absolute language like "biggest" or "most important" unless the evidence itself states the comparison (an explicit milestone number, an explicit ranking) — then state it plainly, the way the source does.
+- Only surface something as a finding if it is genuinely worth a user's attention. Returning fewer than 3 findings — or none — is correct when nothing this week clears that bar; never pad with routine updates just to reach 3.
+- Every finding must cite the id of every event it draws on. A finding that connects multiple sources must cite all of them, not just one.`,
+    prompt: `This week's recorded Inbox events (JSON):\n${JSON.stringify(eventsForPrompt(events))}\n\nCall emit_result with the overview and findings.`,
+    schema: FindingsSchema,
+    maxTokens: 900,
   });
-  return { overview: result.overview.trim() };
+  const known = new Set(events.map((e) => e.id));
+  return {
+    overview: result.overview.trim(),
+    findings: result.findings
+      .map((f) => ({ statement: f.statement.trim(), eventIds: [...new Set(f.eventIds.filter((id) => known.has(id)))] }))
+      // A finding that cited nothing real lost all its evidence to the filter above — drop it rather than show an unsupported claim.
+      .filter((f) => f.eventIds.length > 0),
+  };
 }
 
 async function generateReview(events: InboxEventWithRefs[]): Promise<ReviewDigest> {
@@ -131,7 +176,7 @@ export type DigestResult<T> =
   | { status: "ready"; range: InboxRange; stats: WeekStats; digest: T; cached: boolean };
 
 async function getDigest<T>(
-  kind: "overview" | "review",
+  kind: "findings" | "review",
   generate: (events: InboxEventWithRefs[]) => Promise<T>,
   now?: Date
 ): Promise<DigestResult<T>> {
@@ -170,8 +215,8 @@ async function getDigest<T>(
 
 const inFlight = new Map<string, Promise<unknown>>();
 
-export function getWeeklyOverview(now?: Date) {
-  return getDigest<OverviewDigest>("overview", generateOverview, now);
+export function getWeeklyFindings(now?: Date) {
+  return getDigest<FindingsDigest>("findings", generateFindings, now);
 }
 
 export function getWeeklyReview(now?: Date) {

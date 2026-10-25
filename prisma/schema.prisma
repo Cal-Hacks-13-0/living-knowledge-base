@@ -298,7 +298,7 @@ model InboxEvent {
 model InboxDigest {
   id          String   @id @default(cuid())
   workspaceId String
-  kind        String // "overview" | "review"
+  kind        String // "findings" | "review"
   rangeKey    String // "<start ISO date>_<end ISO date>"
   fingerprint String
   content     String // JSON

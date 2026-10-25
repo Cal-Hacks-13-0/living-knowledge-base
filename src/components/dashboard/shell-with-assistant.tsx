@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, MotionConfig } from "motion/react";
 import { Sidebar, type SidebarKnowledgeBase } from "./sidebar";
@@ -86,13 +87,21 @@ export function ShellWithAssistant({
           <div aria-hidden className="ambient-charcoal pointer-events-none absolute inset-0">
             <StarField density={2.4} />
           </div>
+          <Link
+            href="/"
+            aria-label="Axion home"
+            className="fixed left-3 top-3 z-30 flex items-center gap-2 rounded-xl px-3 py-2 text-sidebar-foreground sm:hidden"
+          >
+            <AxionLogo className="h-6 w-auto" />
+            <span className="text-sm font-semibold">Axion</span>
+          </Link>
           {prefs.sidebarCollapsed ? (
             <button
               type="button"
               onClick={() => setLayoutPrefs({ sidebarCollapsed: false })}
               aria-label="Open sidebar"
               title="Open sidebar"
-              className="fixed left-3 top-3 z-30 flex items-center gap-2 chrome-glass rounded-xl px-3 py-2 text-sidebar-foreground shadow-sm transition-colors hover:bg-sidebar-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+              className="fixed left-3 top-3 z-30 hidden items-center gap-2 chrome-glass rounded-xl px-3 py-2 text-sidebar-foreground shadow-sm transition-colors hover:bg-sidebar-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 sm:flex"
             >
               <AxionLogo className="h-6 w-auto" />
               <span className="text-sm font-semibold">Axion</span>
@@ -124,8 +133,8 @@ export function ShellWithAssistant({
             className="ambient relative min-w-0 flex-1"
           >
             <AmbientBackdrop mode="fluid" regionRef={regionRef} />
-            <main className="relative z-10 h-full overflow-y-auto">{children}</main>
-            <CursorTrailToggle className="absolute bottom-4 right-4" />
+            <main className="relative z-10 h-full overflow-y-auto pt-14 sm:pt-0">{children}</main>
+            <CursorTrailToggle className="absolute bottom-4 right-4 hidden sm:flex" />
           </motion.div>
           <AiAssistantPanel
             open={assistantOpen}

@@ -45,7 +45,7 @@ export function Sidebar({
 
   return (
     <aside
-      className="chrome-glass relative z-10 flex h-full shrink-0 flex-col text-sidebar-foreground"
+      className="chrome-glass relative z-10 hidden h-full shrink-0 flex-col text-sidebar-foreground sm:flex"
       style={{ width }}
     >
       {children}

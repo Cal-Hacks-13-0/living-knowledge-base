@@ -1,17 +1,18 @@
 import { listInboxEvents } from "@/lib/inbox/events";
 import { currentWeekRange, weekStats } from "@/lib/inbox/digest";
+import { listSourceIssues } from "@/lib/inbox/source-issues";
 import { InboxView, type InboxFeedEvent } from "@/components/inbox/inbox-view";
 
 /**
  * The Inbox: a system-generated feed of changes across the workspace's
- * knowledge vaults (lib/inbox/events.ts), with an AI overview of this week and
- * an on-demand weekly review (lib/inbox/digest.ts). Nothing here is typed by
- * the user; events are recorded by the research pipeline, the AI Assistant's
- * archive tool, and proposal reviews.
+ * knowledge vaults (lib/inbox/events.ts), led by a handful of AI-written
+ * findings and an on-demand full review (lib/inbox/digest.ts). Nothing here
+ * is typed by the user; events are recorded by the research pipeline, the AI
+ * Assistant's archive tool, and proposal reviews.
  */
 export default async function InboxPage() {
   const range = currentWeekRange();
-  const events = await listInboxEvents();
+  const [events, sourceIssues] = await Promise.all([listInboxEvents(), listSourceIssues()]);
   const thisWeek = events.filter((e) => e.occurredAt >= range.start);
 
   const feed: InboxFeedEvent[] = events.map((e) => ({
@@ -38,6 +39,7 @@ export default async function InboxPage() {
       events={feed}
       range={{ start: range.start.toISOString(), end: range.end.toISOString() }}
       stats={weekStats(thisWeek)}
+      sourceIssues={sourceIssues}
     />
   );
 }

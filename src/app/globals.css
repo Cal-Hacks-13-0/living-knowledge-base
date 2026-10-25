@@ -95,6 +95,15 @@ body {
   }
 }
 
+/* Loading skeletons (components/ui/skeleton.tsx), used by the Inbox's
+   findings/review loading states among others — the pulse is decorative,
+   not informative, so it's safe to just stop it. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
+}
+
 /* Homepage only (app/(home)/layout.tsx): strict monochrome on near-black. The
    palette tokens are re-pointed here, so shared components (menu, buttons,
    hero text) follow without per-component overrides; other pages keep the

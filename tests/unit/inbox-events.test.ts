@@ -11,7 +11,7 @@ vi.mock("@/lib/ai/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/ai/client")>()),
   generateStructured,
 }));
-const { getWeeklyOverview, getWeeklyReview } = await import("@/lib/inbox/digest");
+const { getWeeklyFindings, getWeeklyReview } = await import("@/lib/inbox/digest");
 
 const extraction: ExtractionResponse = {
   summary: "React 20 ships a new compiler by default.",
@@ -196,17 +196,21 @@ describe("Inbox weekly digests", () => {
 
   it("doesn't call the AI when nothing happened this week", async () => {
     await seed();
-    expect((await getWeeklyOverview()).status).toBe("empty");
+    expect((await getWeeklyFindings()).status).toBe("empty");
     expect(generateStructured).not.toHaveBeenCalled();
   });
 
-  it("caches the overview until this week's events change", async () => {
+  it("caches the findings until this week's events change", async () => {
     const { kb, doc } = await seed();
     await applyComparisonClassification({ knowledgeBaseId: kb.id, title: "A", extraction, comparison: comparison({}), sourceDocumentId: doc.id, origin: "manual_scan" });
-    generateStructured.mockResolvedValue({ overview: "You added a note on React 20." });
+    const [event] = await listInboxEvents();
+    generateStructured.mockResolvedValue({
+      overview: "You added one new note this week.",
+      findings: [{ statement: "You added a note on React 20.", eventIds: [event.id] }],
+    });
 
-    const first = await getWeeklyOverview();
-    const second = await getWeeklyOverview();
+    const first = await getWeeklyFindings();
+    const second = await getWeeklyFindings();
     expect(first).toMatchObject({ status: "ready", cached: false, stats: { updates: 1, vaults: 1 } });
     expect(second).toMatchObject({ status: "ready", cached: true });
     expect(generateStructured).toHaveBeenCalledTimes(1);
@@ -214,8 +218,23 @@ describe("Inbox weekly digests", () => {
     expect(generateStructured.mock.calls[0][0].prompt).toContain("New note: A");
 
     await recordInboxEvent({ dedupeKey: "entry:new", category: "EXTERNAL_DISCOVERY", status: "APPLIED", knowledgeBaseId: kb.id, title: "B", description: "d", origin: "manual_scan" });
-    expect(await getWeeklyOverview()).toMatchObject({ status: "ready", cached: false });
+    expect(await getWeeklyFindings()).toMatchObject({ status: "ready", cached: false });
     expect(generateStructured).toHaveBeenCalledTimes(2);
+  });
+
+  it("findings keep only references to real events, and drop any finding left without evidence", async () => {
+    const { kb, doc } = await seed();
+    await applyComparisonClassification({ knowledgeBaseId: kb.id, title: "A", extraction, comparison: comparison({}), sourceDocumentId: doc.id, origin: "manual_scan" });
+    const [event] = await listInboxEvents();
+    generateStructured.mockResolvedValue({
+      overview: "You added one new note this week.",
+      findings: [
+        { statement: "A real finding.", eventIds: [event.id, "made-up-id"] },
+        { statement: "A fabricated finding with no real evidence.", eventIds: ["made-up-id"] },
+      ],
+    });
+    const findings = await getWeeklyFindings();
+    expect(findings.status === "ready" && findings.digest.findings).toEqual([{ statement: "A real finding.", eventIds: [event.id] }]);
   });
 
   it("review keeps only references to real events in the range", async () => {
