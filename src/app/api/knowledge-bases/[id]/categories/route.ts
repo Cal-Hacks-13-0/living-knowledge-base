@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id } = await params;
     const kb = await prisma.knowledgeBase.findUnique({ where: { id } });
-    if (!kb) throw new NotFoundError(`Knowledge base not found: ${id}`);
+    if (!kb) throw new NotFoundError(`Knowledge vault not found: ${id}`);
 
     const body = CreateCategoryRequestSchema.parse(await req.json());
 

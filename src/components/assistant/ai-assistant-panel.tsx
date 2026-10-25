@@ -86,9 +86,9 @@ export function AiAssistantPanel({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-center">
             <Sparkles className="h-5 w-5 text-accent" />
-            <p className="text-sm font-medium text-foreground">Ask anything, across all your knowledge bases</p>
+            <p className="text-sm font-medium text-foreground">Ask anything, across all your knowledge vaults</p>
             <p className="text-xs text-muted">
-              I can also archive a link you share, run research on demand, or help start a new knowledge base.
+              I can also archive a link you share, run research on demand, or help start a new knowledge vault.
             </p>
           </div>
         ) : (
@@ -115,7 +115,7 @@ export function AiAssistantPanel({
                   </div>
                   {m.suggestedKnowledgeBase && (
                     <div className="rounded-xl border border-accent/30 bg-accent-soft p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-accent">New knowledge base</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-accent">New knowledge vault</p>
                       <p className="mt-1 text-sm text-foreground">&ldquo;{m.suggestedKnowledgeBase.goal}&rdquo;</p>
                       <Button
                         size="sm"
@@ -124,7 +124,7 @@ export function AiAssistantPanel({
                           router.push(`/new?goal=${encodeURIComponent(m.suggestedKnowledgeBase!.goal)}`)
                         }
                       >
-                        Create this knowledge base <ArrowRight className="h-3.5 w-3.5" />
+                        Create this knowledge vault <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   )}
@@ -157,7 +157,7 @@ export function AiAssistantPanel({
             }
           }}
           rows={1}
-          placeholder="Ask anything, share a link, or describe a new knowledge base…"
+          placeholder="Ask anything, share a link, or describe a new knowledge vault…"
           className="max-h-32 min-h-9 flex-1 resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-accent/30"
         />
         <Button type="submit" size="icon" disabled={sending || !draft.trim()} aria-label="Send">

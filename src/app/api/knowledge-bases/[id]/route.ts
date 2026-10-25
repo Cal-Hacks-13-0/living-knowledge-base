@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         researchRuns: { orderBy: { startedAt: "desc" }, take: 1 },
       },
     });
-    if (!kb) throw new NotFoundError(`Knowledge base not found: ${id}`);
+    if (!kb) throw new NotFoundError(`Knowledge vault not found: ${id}`);
 
     const pendingInsights = await prisma.insight.count({
       where: { knowledgeBaseId: id, status: "PENDING" },
@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const existing = await prisma.knowledgeBase.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundError(`Knowledge base not found: ${id}`);
+    if (!existing) throw new NotFoundError(`Knowledge vault not found: ${id}`);
 
     const body = UpdateKnowledgeBaseRequestSchema.parse(await req.json());
     const updated = await prisma.knowledgeBase.update({ where: { id }, data: body });

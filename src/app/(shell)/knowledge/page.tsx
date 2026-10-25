@@ -18,7 +18,7 @@ export default async function HomePage() {
     <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Your knowledge bases</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Your knowledge vaults</h1>
           <p className="mt-1 text-sm text-muted">
             Single-user local mode — everything here lives in your local SQLite database.
           </p>
@@ -27,7 +27,7 @@ export default async function HomePage() {
           <AiAssistantTrigger />
           <Link href="/new">
             <Button>
-              <Sparkles className="h-4 w-4" /> New knowledge base
+              <Sparkles className="h-4 w-4" /> New knowledge vault
             </Button>
           </Link>
         </div>
@@ -36,8 +36,8 @@ export default async function HomePage() {
       {knowledgeBases.length === 0 ? (
         <EmptyState
           icon={<BookOpen className="h-6 w-6" />}
-          title="No knowledge bases yet"
-          description='Try a goal like "I want to build a knowledge base about full-stack development," "Research starting a DIY bubble tea business," or "Build a personal freediving knowledge base."'
+          title="No knowledge vaults yet"
+          description='Try a goal like "I want to build a knowledge vault about full-stack development," "Research starting a DIY bubble tea business," or "Build a personal freediving knowledge vault."'
           action={
             <Link href="/new">
               <Button variant="secondary">Get started</Button>

@@ -1,15 +1,16 @@
 import { generateStructured } from "./client";
 import { BlueprintResponseSchema, type BlueprintResponse } from "./schemas";
 import { discoverVerifiedSources } from "@/lib/research/source-discovery";
+import { isHackerNewsSource } from "@/lib/research/known-sources";
 import type { OnboardingAnswer } from "./schemas";
 
-const SYSTEM_PROMPT = `You are the Blueprint Agent for "Living Knowledge Base". You turn a user's
-goal plus their onboarding answers into a structured, editable knowledge base blueprint.
+const SYSTEM_PROMPT = `You are the Blueprint Agent for "Axion". You turn a user's
+goal plus their onboarding answers into a structured, editable knowledge vault blueprint.
 You are completely domain-agnostic: the same logic must work for software development,
 freediving, bubble tea entrepreneurship, or any other topic.
 
 Produce:
-- A short, specific knowledge base name and a one-paragraph description.
+- A short, specific knowledge vault name and a one-paragraph description.
 - 3-7 top-level categories, each with a description and 0-5 subtopics.
 - 3-6 research priorities (what matters most to monitor, in priority order).
 - 3-8 candidate external sources (RSS feeds, GitHub repos for software projects, or
@@ -74,6 +75,8 @@ Call the emit_result tool with the full blueprint as specified.`;
   // Merge in deterministic, real sources so the blueprint always contains at
   // least a few sources that genuinely fetch content, regardless of what the
   // model proposed.
+  // Hacker News isn't offered in the wizard's source step, even if the model suggests it.
+  aiResult.sources = aiResult.sources.filter((s) => !isHackerNewsSource(s));
   const categoryNames = aiResult.categories.map((c) => c.name);
   const verifiedSources = discoverVerifiedSources(userGoal, categoryNames);
   const existingUrls = new Set(aiResult.sources.map((s) => s.url.toLowerCase()));

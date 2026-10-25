@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,15 @@ export function LibraryBrowser({
   const [loading, setLoading] = useState(false);
   const trimmedSearch = search.trim();
   const entries = trimmedSearch ? (searchResults ?? initialEntries) : initialEntries;
+
+  // Deep link from global search: /kb/:id/library#entry-<id> scrolls to, highlights, and focuses that entry.
+  const targetEntryId = useSyncExternalStore(subscribeToHash, readHashEntryId, () => null);
+  useEffect(() => {
+    if (!targetEntryId) return;
+    const el = document.getElementById(`entry-${targetEntryId}`);
+    el?.scrollIntoView({ block: "center" });
+    el?.focus({ preventScroll: true });
+  }, [targetEntryId]);
 
   useEffect(() => {
     if (!trimmedSearch) return; // nothing to debounce — `entries` already falls back to initialEntries
@@ -100,7 +109,7 @@ export function LibraryBrowser({
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   {group.entries.map((entry) => (
-                    <EntryCard key={entry.id} entry={entry} />
+                    <EntryCard key={entry.id} entry={entry} highlighted={entry.id === targetEntryId} />
                   ))}
                 </div>
               )}
@@ -110,4 +119,14 @@ export function LibraryBrowser({
       )}
     </div>
   );
+}
+
+function subscribeToHash(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+}
+
+function readHashEntryId(): string | null {
+  const match = /^#entry-(.+)$/.exec(window.location.hash);
+  return match ? decodeURIComponent(match[1]) : null;
 }

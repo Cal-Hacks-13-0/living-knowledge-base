@@ -6,7 +6,9 @@ import type { BlueprintSource } from "@/lib/ai/schemas";
  * it cannot browse the web to confirm a page is live — so we deterministically
  * merge in a small set of sources we know work, marked verified: true. This
  * keeps the end-to-end research loop grounded in content that actually
- * fetches, for any domain, instead of relying on the model to invent URLs.
+ * fetches instead of relying on the model to invent URLs. (A Hacker News
+ * keyword feed used to be added for every goal; it was removed from the
+ * wizard's source step.)
  */
 
 const GITHUB_REPO_KEYWORDS: Array<{ keywords: string[]; repo: string; name: string }> = [
@@ -26,30 +28,17 @@ const GITHUB_REPO_KEYWORDS: Array<{ keywords: string[]; repo: string; name: stri
   { keywords: ["security", "vulnerability", "cve"], repo: "github/advisory-database", name: "GitHub Advisory Database (GitHub)" },
 ];
 
-function hnSearchFeed(topic: string): BlueprintSource {
-  const query = topic.trim().slice(0, 80);
-  return {
-    name: `Hacker News search: "${query}"`,
-    url: `https://hnrss.org/newest?q=${encodeURIComponent(query)}`,
-    type: "RSS",
-    verified: true,
-    rationale:
-      "Deterministic, always-reachable public RSS search feed (hnrss.org) seeded from your goal. Works for any topic and guarantees at least one monitorable source.",
-  };
-}
-
 /**
  * Returns a small set of real, known-good sources relevant to the given
- * goal + category names. Always includes at least one HN keyword search
- * feed; adds GitHub Releases sources when the text matches known software
- * projects.
+ * goal + category names: GitHub Releases sources when the text matches known
+ * software projects. May be empty for non-software goals.
  */
 export function discoverVerifiedSources(
   goalText: string,
   categoryNames: string[]
 ): BlueprintSource[] {
   const haystack = `${goalText} ${categoryNames.join(" ")}`.toLowerCase();
-  const sources: BlueprintSource[] = [hnSearchFeed(goalText)];
+  const sources: BlueprintSource[] = [];
 
   const seenRepos = new Set<string>();
   for (const entry of GITHUB_REPO_KEYWORDS) {
@@ -68,4 +57,20 @@ export function discoverVerifiedSources(
   }
 
   return sources;
+}
+
+const HACKER_NEWS_HOSTS = new Set(["hnrss.org", "news.ycombinator.com", "hn.algolia.com"]);
+
+/**
+ * Hacker News is no longer offered as a source in the new-vault wizard (Step 4).
+ * Used to strip it from AI-drafted blueprints; sources a user adds themselves,
+ * and sources already stored on existing vaults, are left alone.
+ */
+export function isHackerNewsSource(source: Pick<BlueprintSource, "url" | "name">): boolean {
+  try {
+    if (HACKER_NEWS_HOSTS.has(new URL(source.url).hostname.replace(/^www\./, ""))) return true;
+  } catch {
+    // not a parseable URL — fall through to the name check
+  }
+  return /hacker\s*news/i.test(source.name);
 }

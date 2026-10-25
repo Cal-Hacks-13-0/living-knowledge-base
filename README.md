@@ -1,4 +1,8 @@
-# Living Knowledge Base
+# Axion
+
+An Autonomous Knowledge System (formerly "Living Knowledge Base"; the user-facing name for a
+knowledge base is now a **knowledge vault** — code, routes, and the database keep the original
+`knowledgeBase` naming).
 
 An AI-powered knowledge management MVP that discovers external information, continuously
 monitors sources, and proactively surfaces insights for review — for **any** domain
@@ -79,11 +83,10 @@ suite is fully deterministic and offline.
    `PENDING` insight and proposal from all KBs into one review queue. **All Knowledge**
    in the sidebar is the full KB grid (what used to be the homepage).
 
-A source that's guaranteed to actually fetch real content even with no AI configured:
-every blueprint includes a deterministic `hnrss.org` keyword-search RSS feed derived from
-your goal (see `src/lib/research/known-sources.ts`), plus GitHub Releases sources for any
-well-known project your goal/categories mention (React, Next.js, Node, Prisma, Docker,
-Kubernetes, etc). Everything else the AI suggests is marked **"Unverified suggestion"**
+Sources that are guaranteed to actually fetch real content: blueprints include GitHub
+Releases sources for any well-known project your goal/categories mention (React, Next.js,
+Node, Prisma, Docker, Kubernetes, etc; see `src/lib/research/known-sources.ts`). Hacker News is no longer offered in the wizard's
+source step (Step 4). Everything else the AI suggests is marked **"Unverified suggestion"**
 because the model can't browse the web to confirm a URL is live — you decide whether to
 keep it.
 
@@ -135,8 +138,7 @@ agents are five prompt/schema pairs sharing `generateStructured()` — not five 
 deployments. All of them are domain-agnostic by construction (no hardcoded "software"
 assumptions in prompts or schemas); see `src/lib/research/known-sources.ts` for the one
 deliberately domain-aware piece (recognizing well-known software project names to suggest
-real GitHub repos) and the fallback `hnrss.org` keyword feed that works for literally any
-topic.
+real GitHub repos).
 
 ## 4. Research pipeline
 

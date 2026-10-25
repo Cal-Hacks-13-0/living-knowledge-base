@@ -2,7 +2,7 @@ import { generateStructured } from "./client";
 import { InsightResponseSchema, type InsightResponse } from "./schemas";
 import type { ComparisonResponse, ExtractionResponse } from "./schemas";
 
-const SYSTEM_PROMPT = `You are the Insight Agent for "Living Knowledge Base". Given everything
+const SYSTEM_PROMPT = `You are the Insight Agent for "Axion". Given everything
 found during one research run, decide which findings are actually worth surfacing to the
 user as insights.
 

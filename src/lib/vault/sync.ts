@@ -57,7 +57,7 @@ async function clearAndRecreate(dir: string) {
  */
 export async function syncKnowledgeBaseToVault(knowledgeBaseId: string): Promise<string> {
   const kb = await prisma.knowledgeBase.findUnique({ where: { id: knowledgeBaseId } });
-  if (!kb) throw new Error(`Knowledge base not found: ${knowledgeBaseId}`);
+  if (!kb) throw new Error(`Knowledge vault not found: ${knowledgeBaseId}`);
 
   const [categories, sources, entries, insights, proposals] = await Promise.all([
     prisma.knowledgeCategory.findMany({ where: { knowledgeBaseId } }),

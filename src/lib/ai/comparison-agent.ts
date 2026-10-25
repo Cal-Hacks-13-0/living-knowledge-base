@@ -2,7 +2,7 @@ import { generateStructured } from "./client";
 import { ComparisonResponseSchema, type ComparisonResponse } from "./schemas";
 import type { ExtractionResponse } from "./schemas";
 
-const SYSTEM_PROMPT = `You are the Knowledge Comparison Agent for "Living Knowledge Base". You
+const SYSTEM_PROMPT = `You are the Knowledge Comparison Agent for "Axion". You
 compare newly extracted information against a set of existing knowledge entries and
 classify the relationship.
 
@@ -43,7 +43,7 @@ ${
     ? existingEntries
         .map((e) => `${e.id} | ${e.title} | ${e.summary}`)
         .join("\n")
-    : "(no existing entries in this knowledge base yet)"
+    : "(no existing entries in this knowledge vault yet)"
 }
 
 Call the emit_result tool with your classification. If you reference relatedEntryId, it

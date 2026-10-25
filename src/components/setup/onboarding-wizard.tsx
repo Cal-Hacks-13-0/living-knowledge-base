@@ -183,7 +183,7 @@ export function OnboardingWizard() {
       });
       router.push(`/kb/${kb.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to create knowledge base.");
+      setError(err instanceof ApiError ? err.message : "Failed to create knowledge vault.");
       setCreating(false);
     }
   }
@@ -200,7 +200,7 @@ export function OnboardingWizard() {
           {stepIndex === 0 && (
             <>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Step 1. Tell us about your knowledge base</h1>
+                <h1 className="text-xl font-semibold text-foreground">Step 1. Tell us about your knowledge vault</h1>
                 <p className="mt-1 text-sm text-muted">
                   We&apos;ll ask a few questions to understand your goals and generate a blueprint.
                 </p>
@@ -208,13 +208,13 @@ export function OnboardingWizard() {
 
               {!goal ? (
                 <form onSubmit={handleGoalSubmit} className="flex flex-col gap-3">
-                  <Label htmlFor="goal">What do you want to build a knowledge base about?</Label>
+                  <Label htmlFor="goal">What do you want to build a knowledge vault about?</Label>
                   <Textarea
                     id="goal"
                     rows={3}
                     value={goalDraft}
                     onChange={(e) => setGoalDraft(e.target.value)}
-                    placeholder="I want to build a knowledge base about…"
+                    placeholder="I want to build a knowledge vault about…"
                   />
                   <Button type="submit" disabled={!goalDraft.trim()} className="self-start">
                     <Sparkles className="h-4 w-4" /> Generate questions
@@ -247,7 +247,7 @@ export function OnboardingWizard() {
             <>
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Step 2. Set your preferences</h1>
-                <p className="mt-1 text-sm text-muted">Help us customize the knowledge base to better fit your needs.</p>
+                <p className="mt-1 text-sm text-muted">Help us customize the knowledge vault to better fit your needs.</p>
               </div>
               <PreferencesStep value={preferences} onChange={setPreferences} />
             </>
@@ -296,7 +296,7 @@ export function OnboardingWizard() {
             <>
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Step 5. Review &amp; create</h1>
-                <p className="mt-1 text-sm text-muted">Nothing is saved yet — confirm to create your knowledge base.</p>
+                <p className="mt-1 text-sm text-muted">Nothing is saved yet — confirm to create your knowledge vault.</p>
               </div>
 
               <div className="rounded-xl border border-border p-4">
@@ -349,7 +349,7 @@ export function OnboardingWizard() {
             ) : (
               <Button type="button" onClick={handleCreate} disabled={creating}>
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                Confirm &amp; create knowledge base
+                Confirm &amp; create knowledge vault
               </Button>
             )}
           </div>

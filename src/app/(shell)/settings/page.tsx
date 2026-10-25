@@ -16,7 +16,7 @@ export default async function GlobalSettingsPage() {
     <div className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
-        <p className="mt-1 text-sm text-muted">App-level configuration. Per-knowledge-base settings live on each KB&apos;s own Settings tab.</p>
+        <p className="mt-1 text-sm text-muted">App-level configuration. Per-vault settings live on each knowledge vault&apos;s own Settings tab.</p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -54,8 +54,8 @@ export default async function GlobalSettingsPage() {
           <CardHeader>
             <CardTitle>Markdown vault</CardTitle>
             <CardDescription>
-              A synced, Obsidian-readable folder of every knowledge base — one subfolder per KB, kept up to date
-              automatically. Per-KB sync status and a manual resync button live on each KB&apos;s Settings tab.
+              A synced, Obsidian-readable folder of every knowledge vault — one subfolder per vault, kept up to date
+              automatically. Per-vault sync status and a manual resync button live on each knowledge vault&apos;s Settings tab.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -65,11 +65,11 @@ export default async function GlobalSettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Knowledge bases</CardTitle>
+            <CardTitle>Knowledge vaults</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {knowledgeBases.length === 0 ? (
-              <p className="text-sm text-muted">No knowledge bases yet.</p>
+              <p className="text-sm text-muted">No knowledge vaults yet.</p>
             ) : (
               knowledgeBases.map((kb) => (
                 <Link

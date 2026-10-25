@@ -37,7 +37,7 @@ export default async function InboxPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-foreground">Inbox</h1>
         <p className="mt-1 text-sm text-muted">
-          Everything pending review across all your knowledge bases — {insights.length} insight(s),{" "}
+          Everything pending review across all your knowledge vaults — {insights.length} insight(s),{" "}
           {proposals.length} proposed update(s).
         </p>
       </div>
