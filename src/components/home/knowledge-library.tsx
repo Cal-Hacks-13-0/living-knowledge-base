@@ -6,6 +6,8 @@ import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NetworkSphere } from "./network-sphere";
+import { AxionWordmark } from "@/components/brand/axion-logo";
+import { wordmarkFont } from "@/lib/fonts";
 
 export interface LibraryKnowledgeBase {
   id: string;
@@ -46,8 +48,8 @@ const OPEN_MS = 1450;
 const CLOSE_MS = 1050;
 const OPEN_STAGGER_MS = 35;
 const CLOSE_STAGGER_MS = 30;
-// Stage height = viewport minus the (home) layout's h-14 header.
-const STAGE_HEIGHT = "calc(100dvh - 3.5rem)";
+// Stage height = viewport minus the (home) layout's h-16 header.
+const STAGE_HEIGHT = "calc(100dvh - 4rem)";
 
 // Coming Back to Home after leaving it with the vaults open restores them
 // (without replaying the animation); any other arrival starts closed.
@@ -195,7 +197,9 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
         <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-muted sm:text-xs">
           An Autonomous Knowledge System
         </p>
-        <h1 className="mt-3 text-6xl font-semibold tracking-tight text-foreground sm:text-7xl">Axion</h1>
+        <h1 className="mt-3 text-6xl text-foreground sm:text-7xl">
+          <AxionWordmark fontClassName={wordmarkFont.className} />
+        </h1>
         <p className="mt-3 text-base text-balance text-muted sm:text-lg">Discover what you don&apos;t know yet.</p>
       </div>
 

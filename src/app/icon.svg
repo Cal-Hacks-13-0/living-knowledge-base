@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Axion logo on a rounded black tile (visible on light and dark browser tabs). -->
+  <rect width="64" height="64" rx="14" fill="#0a0a0a"/>
+  <g transform="translate(4 9) scale(0.424)" fill="none">
+    <ellipse cx="66" cy="60" rx="60" ry="17" transform="rotate(-17 66 60)" stroke="#f5f5f5" stroke-opacity="0.85" stroke-width="5"/>
+    <g transform="translate(16 4)">
+      <path d="M43 0H57L100 100H81L50 28L19 100H0Z" fill="#f5f5f5"/>
+      <circle cx="50" cy="74" r="12.5" fill="#E8794A"/>
+    </g>
+    <circle cx="122" cy="40" r="8.5" fill="#f5f5f5"/>
+  </g>
+</svg>
