@@ -115,7 +115,7 @@ export function InboxView({
         />
       )}
 
-      <section className="mt-10" aria-labelledby="all-updates">
+      <section className="mt-10 rounded-2xl border border-border bg-card px-5 pb-2 pt-4" aria-labelledby="all-updates">
         <h2 id="all-updates" className="mb-2 text-sm font-semibold text-foreground">
           All updates
         </h2>
@@ -167,7 +167,7 @@ function OverviewCard({
   return (
     <section
       aria-labelledby="week-heading"
-      className="rounded-xl border border-border bg-accent-soft px-5 py-4 text-foreground"
+      className="rounded-xl border border-border bg-accent-soft px-5 py-4 text-foreground backdrop-blur-md"
     >
       <p className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-strong">
         Your week, distilled

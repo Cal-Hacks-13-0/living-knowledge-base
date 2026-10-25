@@ -285,7 +285,7 @@ function ResultRow({
       onMouseDown={(e) => e.preventDefault()}
       onClick={onSelect}
       className={cn(
-        "cursor-pointer rounded-lg border px-4 py-3 transition-colors",
+        "cursor-pointer rounded-lg border bg-card px-4 py-3 transition-colors",
         active ? "border-accent/50 bg-accent-soft/60" : "border-border hover:border-accent/30 hover:bg-surface"
       )}
     >

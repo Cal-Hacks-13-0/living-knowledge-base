@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { PreferencesStep, type WizardPreferences } from "./preferences-step";
 import { CategoryList } from "@/components/blueprint/category-list";
 import { SourceList } from "@/components/blueprint/source-list";
 import { apiPost, ApiError } from "@/lib/client/api";
+import { AmbientBackdrop } from "@/components/ambient/ambient-backdrop";
+import { newVaultReturnPath } from "@/components/route-memory";
 import type {
   SetupQuestion,
   SetupQuestionsResponse,
@@ -35,6 +37,7 @@ export function OnboardingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const regionRef = useRef<HTMLDivElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -159,7 +162,8 @@ export function OnboardingWizard() {
   function goBack() {
     setError(null);
     if (stepIndex === 0) {
-      router.push("/");
+      // Back to where the user started the flow from — never the landing page.
+      router.push(newVaultReturnPath());
       return;
     }
     setStepIndex((i) => Math.max(i - 1, 0));
@@ -189,11 +193,15 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="flex h-dvh">
+    // Creation mode: the whole screen is a quiet, cursor-turned starfield (no
+    // cursor fluid, no network); the side columns are frosted glass over it and
+    // every step sits in a readable glass panel.
+    <div ref={regionRef} className="ambient relative flex h-dvh">
+      <AmbientBackdrop mode="stars" regionRef={regionRef} />
       <StepSidebar steps={STEPS} currentIndex={stepIndex} />
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-2xl flex-col gap-6 px-8 py-10">
+      <div className="relative z-10 h-full min-w-0 flex-1 overflow-y-auto px-6 py-10">
+        <div className="mx-auto flex max-w-2xl flex-col gap-6 rounded-2xl border border-border bg-card px-8 py-8 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]">
           {error && <Alert variant="danger">{error}</Alert>}
 
           {/* Step 0: Your goal */}

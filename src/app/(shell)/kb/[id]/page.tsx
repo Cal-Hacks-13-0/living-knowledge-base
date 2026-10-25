@@ -32,8 +32,12 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
   return (
     <PageEntrance className="flex flex-col gap-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <AnimatedText delay={0.16} className="max-w-xl">
-          <p className="text-sm text-muted">{kb.description}</p>
+        {/* The description + goal sit in one glass bubble so they read clearly over the background. */}
+        <AnimatedText
+          delay={0.16}
+          className="max-w-xl flex-1 rounded-2xl border border-border bg-card px-5 py-4 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.7)]"
+        >
+          <p className="text-sm leading-relaxed text-foreground/90">{kb.description}</p>
           <p className="mt-2 text-xs text-muted">Goal: &ldquo;{kb.userGoal}&rdquo;</p>
         </AnimatedText>
         <RunResearchButton knowledgeBaseId={id} />

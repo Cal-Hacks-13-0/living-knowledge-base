@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, MotionConfig } from "motion/react";
 import { Sidebar, type SidebarKnowledgeBase } from "./sidebar";
@@ -9,6 +9,9 @@ import { AssistantContext } from "@/components/assistant/assistant-context";
 import { ASSISTANT_SPRING } from "@/components/assistant/assistant-motion";
 import { AxionLogo } from "@/components/brand/axion-logo";
 import { ResizeHandle } from "@/components/ui/resize-handle";
+import { AmbientBackdrop } from "@/components/ambient/ambient-backdrop";
+import { CursorTrailToggle } from "@/components/ambient/cursor-trail-toggle";
+import { StarField } from "@/components/ambient/star-field";
 import {
   ASSISTANT_MAX_WIDTH,
   ASSISTANT_MIN_WIDTH,
@@ -54,6 +57,7 @@ export function ShellWithAssistant({
 }) {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [dragging, setDragging] = useState<"sidebar" | "assistant" | null>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
   const prefs = useLayoutPrefs();
   const pathname = usePathname();
   const kbMatch = pathname?.match(/^\/kb\/([^/]+)/);
@@ -77,14 +81,18 @@ export function ShellWithAssistant({
   return (
     <MotionConfig reducedMotion="user">
       <AssistantContext.Provider value={{ open: assistantOpen, toggle: () => setAssistantOpen((o) => !o) }}>
-        <div className={cn("flex h-dvh", dragging && "cursor-col-resize select-none")}>
+        <div className={cn("relative flex h-dvh", dragging && "cursor-col-resize select-none")}>
+          {/* Base behind the whole workspace, so the frosted sidebar has a starfield to blur. */}
+          <div aria-hidden className="ambient-charcoal pointer-events-none absolute inset-0">
+            <StarField density={2.4} />
+          </div>
           {prefs.sidebarCollapsed ? (
             <button
               type="button"
               onClick={() => setLayoutPrefs({ sidebarCollapsed: false })}
               aria-label="Open sidebar"
               title="Open sidebar"
-              className="fixed left-3 top-3 z-30 flex items-center gap-2 rounded-xl border border-border bg-sidebar px-3 py-2 text-sidebar-foreground shadow-sm transition-colors hover:bg-sidebar-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+              className="fixed left-3 top-3 z-30 flex items-center gap-2 chrome-glass rounded-xl px-3 py-2 text-sidebar-foreground shadow-sm transition-colors hover:bg-sidebar-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
             >
               <AxionLogo className="h-6 w-auto" />
               <span className="text-sm font-semibold">Axion</span>
@@ -103,14 +111,22 @@ export function ShellWithAssistant({
               />
             </Sidebar>
           )}
-          <motion.main
+          {/* Main content region: the ambient background (starfield, cursor fluid,
+              smoked veil) lives here only — never under the sidebar or the
+              Assistant panel — and `.ambient` gives its content the dark glass
+              theme. The region doesn't scroll; <main> inside it does, so the
+              background stays put. */}
+          <motion.div
+            ref={regionRef}
             animate={{ marginRight: assistantOpen ? prefs.assistantWidth : 0 }}
             // Follow a drag directly; spring only for opening/closing.
             transition={dragging === "assistant" ? { duration: 0 } : ASSISTANT_SPRING}
-            className="flex-1 overflow-y-auto"
+            className="ambient relative min-w-0 flex-1"
           >
-            {children}
-          </motion.main>
+            <AmbientBackdrop mode="fluid" regionRef={regionRef} />
+            <main className="relative z-10 h-full overflow-y-auto">{children}</main>
+            <CursorTrailToggle className="absolute bottom-4 right-4" />
+          </motion.div>
           <AiAssistantPanel
             open={assistantOpen}
             currentKnowledgeBaseId={currentKnowledgeBaseId}

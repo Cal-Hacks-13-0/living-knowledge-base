@@ -45,7 +45,7 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "absolute right-0 top-0 flex h-full flex-col border-l border-border bg-white shadow-xl transition-transform duration-200",
+          "absolute right-0 top-0 flex h-full flex-col border-l border-border bg-white shadow-xl transition-transform duration-200 solid-surface",
           widthClassName,
           open ? "translate-x-0" : "translate-x-full"
         )}

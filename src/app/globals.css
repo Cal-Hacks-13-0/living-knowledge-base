@@ -1,20 +1,16 @@
 @import "tailwindcss";
 
-/* Axion workspace palette: monochrome paper + ink, with Signal Orange held
-   back for small interaction signals (active nav, new insights, AI
-   activity, notifications) — roughly 95% neutral / 5% orange by visual
-   area, never a primary-button or large-fill color. This is the light-mode
-   counterpart to the landing page's dark theme; the landing page itself
-   lives entirely behind `.home-mono` below, which re-points every one of
-   these token names for `(home)` only, so changes here never reach it.
-   Two values are nudged from their nominal brief hex for WCAG AA text
-   contrast (checked against every surface they appear as text on — paper,
-   white cards, the soft-grey sidebar, and pale-orange badges): muted grey
-   #777777 → #6b6b6b, and Signal Orange #FF5A28, which is 3:1 or under
+/* Axion base palette: Signal Orange held back for small interaction signals
+   (active nav, new insights, AI activity, notifications), never a
+   primary-button or large-fill color. `:root` is the shared default; the
+   landing page (`.home-mono`) and the workspace's ambient dark surfaces
+   (`.ambient`, further down) each re-point these same token names for their
+   own context, so changes here don't reach either automatically. Two values
+   are nudged from their nominal brief hex for WCAG AA text contrast: muted
+   grey #777777 → #6b6b6b, and Signal Orange #FF5A28, which is 3:1 or under
    everywhere as text, gets a dedicated darker `--accent-strong` for
    links/labels (the base `--accent` stays the true Signal Orange for
-   non-text fills/indicators, same split this file already used for the
-   previous sage-green palette). */
+   non-text fills/indicators). */
 :root {
   --background: #fafaf8; /* Paper White — page background */
   --foreground: #111111; /* Near Black — primary text, buttons, icons */
@@ -27,12 +23,14 @@
   --accent-soft: #fff0e8; /* Pale Orange — subtle highlighted states */
   --accent-strong: #c73d14; /* deeper Signal Orange, safe as text/links (4.5:1+ on every workspace surface) */
   --chat-bubble: #eabf66; /* soft honey yellow — the AI Assistant's user-message bubble; a distinct hue from Signal Orange so it doesn't read as a desaturated accent, just a calm fill (10.9:1 with near-black text) */
-  --sidebar: #f2f2f0; /* Soft Grey — quiet, architectural, same family as --surface */
-  --sidebar-foreground: #111111;
-  --sidebar-muted: #6b6b6b;
-  --sidebar-icon: #6b6b6b;
-  --sidebar-active: #ffffff; /* selected row surface — a light neutral fill, never the full accent */
-  --sidebar-hover: #e9e9e6;
+  /* Workspace chrome (sidebar, AI Assistant panel): frosted glass over the dark
+     workspace background — reads as a medium grey, lighter than the main area. */
+  --sidebar: rgba(255, 255, 255, 0.1);
+  --sidebar-foreground: #eef0f3;
+  --sidebar-muted: #b4b8c1;
+  --sidebar-icon: #c2c6ce;
+  --sidebar-active: rgba(255, 255, 255, 0.14); /* selected row — a light fill, never the full accent */
+  --sidebar-hover: rgba(255, 255, 255, 0.07);
 }
 
 @theme inline {
@@ -117,4 +115,111 @@ body {
     var(--background);
   color: var(--foreground);
   color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   Ambient regions (components/ambient/ambient-backdrop.tsx): the main content
+   area of the workspace pages and the new-vault flow sits on a dark starfield
+   behind smoked glass. `.ambient` re-points the palette tokens for that
+   region's content only (the sidebar is outside it and keeps its look), and
+   turns plain white surfaces into readable glass. Text is never blurred or
+   faded: blur is only ever applied to what's *behind* a surface.
+   --------------------------------------------------------------------------- */
+.ambient-charcoal {
+  background: radial-gradient(ellipse 90% 80% at 50% 40%, #34373f 0%, #2a2c33 50%, #202228 100%);
+}
+.ambient-night {
+  background: radial-gradient(ellipse 90% 80% at 50% 40%, #0e0f12 0%, #0a0a0c 60%, #060607 100%);
+}
+
+.ambient {
+  --background: #1f2126; /* used as text on light buttons and as ring offsets */
+  --foreground: #f2f3f5;
+  --muted: #b7bbc4; /* ≥ 6.5:1 on the glass surfaces */
+  --border: rgba(255, 255, 255, 0.12);
+  --surface: rgba(255, 255, 255, 0.07);
+  --card: rgba(36, 38, 45, 0.58); /* smoky glass */
+  --accent: #ff5a28;
+  --accent-foreground: #111111;
+  --accent-soft: rgba(255, 90, 40, 0.16);
+  --accent-strong: #ff9466; /* Signal Orange lightened for text on dark (≥ 5:1) */
+  color: var(--foreground);
+  color-scheme: dark; /* native controls (select menus, scrollbars) go dark too */
+}
+
+/* Frosted-glass chrome (sidebar, AI Assistant panel, collapsed-sidebar button). */
+.chrome-glass {
+  background-color: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(22px) saturate(120%);
+  backdrop-filter: blur(22px) saturate(120%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .chrome-glass {
+    background-color: #3d3f46;
+  }
+}
+
+/* Clearer glass for the new-vault flow's side columns: the starfield shows through. */
+.chrome-glass-clear {
+  background-color: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .chrome-glass-clear {
+    background-color: rgba(255, 255, 255, 0.07);
+  }
+}
+
+/* Plain white surfaces become glass. */
+.ambient .bg-white,
+.ambient .bg-card {
+  background-color: var(--card);
+  -webkit-backdrop-filter: blur(16px) saturate(115%);
+  backdrop-filter: blur(16px) saturate(115%);
+}
+/* Menus, dropdowns, and dialogs need a dependable surface, not see-through glass. */
+.ambient .solid-surface,
+.ambient [role="menu"],
+.ambient [role="dialog"],
+.ambient [role="listbox"] {
+  background-color: #25272d;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ambient .bg-white,
+  .ambient .bg-card {
+    background-color: rgba(36, 38, 45, 0.94);
+  }
+}
+
+/* Status colours: the light-theme pastel chips/text, re-tuned for a dark surface. */
+.ambient .bg-red-50,
+.ambient .hover\:bg-red-50:hover {
+  background-color: rgba(239, 68, 68, 0.16);
+}
+.ambient .text-red-600,
+.ambient .text-red-700 {
+  color: #fca5a5;
+}
+.ambient .border-red-200 {
+  border-color: rgba(248, 113, 113, 0.35);
+}
+.ambient .bg-amber-50,
+.ambient .bg-amber-50\/60 {
+  background-color: rgba(245, 158, 11, 0.14);
+}
+.ambient .text-amber-700 {
+  color: #fcd34d;
+}
+.ambient .border-amber-200 {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+.ambient .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.15);
+}
+.ambient .text-emerald-700 {
+  color: #6ee7b7;
+}
+.ambient ::placeholder {
+  color: rgba(242, 243, 245, 0.5);
 }
