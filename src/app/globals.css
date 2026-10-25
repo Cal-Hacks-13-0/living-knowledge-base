@@ -41,3 +41,25 @@ body {
     transition-delay: 0ms !important;
   }
 }
+
+/* Homepage folder idle float: 0 → -12px → 0 every 6s. Applied to a wrapper inside
+   each folder layer (back, peek cards, front), so all three move together. */
+@keyframes folder-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.folder-float {
+  animation: folder-float 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .folder-float {
+    animation: none;
+  }
+}

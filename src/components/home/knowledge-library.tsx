@@ -70,7 +70,9 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
   const openedFromPeek = useRef(false);
   const pendingFocus = useRef<"cards" | null>(null);
   // Positions captured just before a layout change, for FLIP-animating the hero/folder into place.
-  const flipFrom = useRef<{ hero: DOMRect; folder: DOMRect } | null>(null);
+  // `folderVisual` is where the folder is actually drawn (including its idle float), which is
+  // where cards must leave from; `folder` is its layout box, which is what FLIP moves.
+  const flipFrom = useRef<{ hero: DOMRect; folder: DOMRect; folderVisual: DOMRect } | null>(null);
 
   const count = knowledgeBases.length;
   const peekCards = knowledgeBases.slice(0, PEEK_SLOTS.length);
@@ -97,7 +99,11 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
 
   function captureLayout() {
     if (heroRef.current && folderRef.current) {
-      flipFrom.current = { hero: heroRef.current.getBoundingClientRect(), folder: folderRef.current.getBoundingClientRect() };
+      flipFrom.current = {
+        hero: heroRef.current.getBoundingClientRect(),
+        folder: folderRef.current.getBoundingClientRect(),
+        folderVisual: folderVisualRect(folderRef.current),
+      };
     }
   }
 
@@ -135,8 +141,8 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
       const opening = phase === "opening";
       animations.push(
         ...animateCards(
-          from?.folder ?? folderRef.current.getBoundingClientRect(),
-          folderRef.current.getBoundingClientRect(),
+          from?.folderVisual ?? folderVisualRect(folderRef.current),
+          folderVisualRect(folderRef.current),
           floatRef.current,
           overflowRef.current,
           opening,
@@ -427,18 +433,31 @@ function FolderLayer({
       // Hidden instantly: the cards that fly take over from these exact positions.
       style={{ zIndex: z, visibility: hidden ? "hidden" : "visible" }}
     >
-      <span
-        data-folder-motion
-        className="absolute inset-0 block origin-bottom"
-        style={{
-          transform: `scale(${folderScale(visual, hovering)})`,
-          transition: "transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1)",
-        }}
-      >
-        {children}
+      {/* Idle float (globals.css). Its own wrapper so it never fights the hover scale below or
+          the FLIP `translate` on the layer above; every layer runs it in sync. */}
+      <span data-folder-float className="folder-float absolute inset-0 block">
+        <span
+          data-folder-motion
+          className="absolute inset-0 block origin-bottom"
+          style={{
+            transform: `scale(${folderScale(visual, hovering)})`,
+            transition: "transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+          }}
+        >
+          {children}
+        </span>
       </span>
     </span>
   );
+}
+
+/** The folder button's box shifted by the idle float, i.e. where the folder is currently drawn. */
+function folderVisualRect(button: HTMLElement): DOMRect {
+  const rect = button.getBoundingClientRect();
+  const float = button.querySelector<HTMLElement>("[data-folder-float]");
+  const layer = float?.parentElement;
+  const offset = float && layer ? float.getBoundingClientRect().top - layer.getBoundingClientRect().top : 0;
+  return new DOMRect(rect.x, rect.y + offset, rect.width, rect.height);
 }
 
 function folderScale(visual: Visual, hovering: boolean): number {
