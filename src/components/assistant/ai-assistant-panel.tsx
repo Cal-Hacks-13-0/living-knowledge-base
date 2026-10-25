@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Send, Loader2, Bot, User, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChatMarkdown } from "./chat-markdown";
 import { apiPost, ApiError } from "@/lib/client/api";
 import { cn } from "@/lib/utils";
 import {
@@ -151,7 +152,7 @@ export function AiAssistantPanel({
                       <span
                         className={cn(
                           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                          m.role === "user" ? "bg-accent text-accent-foreground" : "bg-accent-soft text-accent-strong"
+                          m.role === "user" ? "bg-foreground text-background" : "bg-accent-soft text-accent-strong"
                         )}
                       >
                         {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
@@ -159,12 +160,12 @@ export function AiAssistantPanel({
                       <div className="flex max-w-[80%] flex-col gap-2">
                         <div
                           className={cn(
-                            "whitespace-pre-wrap rounded-xl px-3 py-2 text-sm",
-                            m.role === "user" ? "bg-accent text-accent-foreground" : "bg-surface text-foreground",
+                            "rounded-xl px-3 py-2",
+                            m.role === "user" ? "bg-chat-bubble text-foreground" : "bg-surface text-foreground",
                             m.error && "border border-red-200 bg-red-50 text-red-700"
                           )}
                         >
-                          {m.content}
+                          <ChatMarkdown content={m.content} />
                         </div>
                         {m.suggestedKnowledgeBase && (
                           <div className="rounded-xl border border-accent/30 bg-accent-soft p-3">

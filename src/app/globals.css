@@ -26,6 +26,7 @@
   --accent-foreground: #111111; /* icon atop a solid accent fill: near-black reads far better here than white (6.1:1 vs 3.1:1) */
   --accent-soft: #fff0e8; /* Pale Orange — subtle highlighted states */
   --accent-strong: #c73d14; /* deeper Signal Orange, safe as text/links (4.5:1+ on every workspace surface) */
+  --chat-bubble: #eabf66; /* soft honey yellow — the AI Assistant's user-message bubble; a distinct hue from Signal Orange so it doesn't read as a desaturated accent, just a calm fill (10.9:1 with near-black text) */
   --sidebar: #f2f2f0; /* Soft Grey — quiet, architectural, same family as --surface */
   --sidebar-foreground: #111111;
   --sidebar-muted: #6b6b6b;
@@ -44,6 +45,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
   --color-accent-strong: var(--accent-strong);
+  --color-chat-bubble: var(--chat-bubble);
   --color-card: var(--card);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
