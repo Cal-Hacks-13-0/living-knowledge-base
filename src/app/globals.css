@@ -143,6 +143,11 @@ body {
   --accent-foreground: #111111;
   --accent-soft: rgba(255, 90, 40, 0.16);
   --accent-strong: #ff9466; /* Signal Orange lightened for text on dark (≥ 5:1) */
+  /* The light-mode --chat-bubble (#eabf66) was calibrated for near-black
+     text; on this dark surface text-foreground resolves to near-white
+     instead, which only hits ~1.6:1 against that light honey fill. Darken
+     the same hue for white-text contrast (≥ 4.5:1) instead. */
+  --chat-bubble: #8b6118;
   color: var(--foreground);
   color-scheme: dark; /* native controls (select menus, scrollbars) go dark too */
 }
