@@ -105,6 +105,7 @@ export async function fetchAndArchiveUrl(knowledgeBaseId: string, rawUrl: string
     extraction,
     comparison,
     sourceDocumentId: stored.id,
+    origin: "assistant_archive",
   });
 
   await syncKnowledgeBaseToVaultSafe(kb.id);

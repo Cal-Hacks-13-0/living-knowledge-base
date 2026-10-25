@@ -14,7 +14,7 @@ export function HowItWorksPanel() {
       <ol className="flex flex-col gap-4">
         {STEPS.map(({ icon: Icon, text }) => (
           <li key={text} className="flex items-start gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-ink">
               <Icon className="h-3.5 w-3.5" />
             </span>
             <span className="pt-1 text-sm text-foreground">{text}</span>

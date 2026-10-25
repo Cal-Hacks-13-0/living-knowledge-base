@@ -61,7 +61,7 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>What&apos;s in the Vault</CardTitle>
-            <Link href={`/kb/${id}/library`} className="text-xs font-medium text-accent">
+            <Link href={`/kb/${id}/library`} className="text-xs font-medium text-accent-ink">
               View all
             </Link>
           </CardHeader>
@@ -76,7 +76,7 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Recently discovered</CardTitle>
-            <Link href={`/kb/${id}/insights`} className="text-xs font-medium text-accent">
+            <Link href={`/kb/${id}/insights`} className="text-xs font-medium text-accent-ink">
               View all
             </Link>
           </CardHeader>
@@ -115,7 +115,7 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
               </p>
               <p className="text-xs text-muted">Nothing is applied to your knowledge vault until you approve it.</p>
             </div>
-            <Link href={`/kb/${id}/insights`} className="text-sm font-medium text-accent">
+            <Link href={`/kb/${id}/insights`} className="text-sm font-medium text-accent-ink">
               Review now →
             </Link>
           </CardContent>

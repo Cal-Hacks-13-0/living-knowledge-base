@@ -1,69 +1,43 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db/prisma";
-import { EmptyState } from "@/components/ui/empty-state";
-import { InsightCard } from "@/components/insights/insight-card";
-import { ProposalCard } from "@/components/insights/proposal-card";
-import { Inbox as InboxIcon } from "lucide-react";
+import { listInboxEvents } from "@/lib/inbox/events";
+import { currentWeekRange, weekStats } from "@/lib/inbox/digest";
+import { InboxView, type InboxFeedEvent } from "@/components/inbox/inbox-view";
 
+/**
+ * The Inbox: a system-generated feed of changes across the workspace's
+ * knowledge vaults (lib/inbox/events.ts), with an AI overview of this week and
+ * an on-demand weekly review (lib/inbox/digest.ts). Nothing here is typed by
+ * the user; events are recorded by the research pipeline, the AI Assistant's
+ * archive tool, and proposal reviews.
+ */
 export default async function InboxPage() {
-  const [insights, proposals] = await Promise.all([
-    prisma.insight.findMany({
-      where: { status: "PENDING" },
-      orderBy: { createdAt: "desc" },
-      include: {
-        knowledgeBase: { select: { id: true, name: true } },
-        evidence: {
-          include: {
-            sourceDocument: { select: { id: true, title: true, url: true } },
-            knowledgeEntry: { select: { id: true, title: true } },
-          },
-        },
-      },
-    }),
-    prisma.knowledgeChangeProposal.findMany({
-      where: { status: "PENDING" },
-      orderBy: { createdAt: "desc" },
-      include: {
-        knowledgeBase: { select: { id: true, name: true } },
-        targetEntry: { select: { id: true, title: true, summary: true, content: true, status: true } },
-      },
-    }),
-  ]);
+  const range = currentWeekRange();
+  const events = await listInboxEvents();
+  const thisWeek = events.filter((e) => e.occurredAt >= range.start);
 
-  const isEmpty = insights.length === 0 && proposals.length === 0;
+  const feed: InboxFeedEvent[] = events.map((e) => ({
+    id: e.id,
+    category: e.category,
+    status: e.status,
+    title: e.title,
+    description: e.description,
+    origin: e.origin,
+    sourceName: e.sourceName,
+    sourceUrl: e.sourceUrl,
+    evidence: e.evidence,
+    beforeContent: e.beforeContent,
+    afterContent: e.afterContent,
+    occurredAt: e.occurredAt.toISOString(),
+    resolvedAt: e.resolvedAt?.toISOString() ?? null,
+    proposalId: e.proposalId,
+    vault: e.knowledgeBase,
+    note: e.knowledgeEntry,
+  }));
 
   return (
-    <div className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-foreground">Inbox</h1>
-        <p className="mt-1 text-sm text-muted">
-          Everything pending review across all your knowledge vaults — {insights.length} insight(s),{" "}
-          {proposals.length} proposed update(s).
-        </p>
-      </div>
-
-      {isEmpty ? (
-        <EmptyState icon={<InboxIcon className="h-6 w-6" />} title="Inbox zero" description="Nothing needs your review right now." />
-      ) : (
-        <div className="flex flex-col gap-8">
-          {proposals.map((p) => (
-            <div key={p.id} className="flex flex-col gap-1.5">
-              <Link href={`/kb/${p.knowledgeBase.id}`} className="w-fit text-xs font-medium text-muted hover:text-accent">
-                {p.knowledgeBase.name}
-              </Link>
-              <ProposalCard proposal={p} />
-            </div>
-          ))}
-          {insights.map((insight) => (
-            <div key={insight.id} className="flex flex-col gap-1.5">
-              <Link href={`/kb/${insight.knowledgeBase.id}`} className="w-fit text-xs font-medium text-muted hover:text-accent">
-                {insight.knowledgeBase.name}
-              </Link>
-              <InsightCard insight={insight} />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <InboxView
+      events={feed}
+      range={{ start: range.start.toISOString(), end: range.end.toISOString() }}
+      stats={weekStats(thisWeek)}
+    />
   );
 }

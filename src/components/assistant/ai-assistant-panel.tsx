@@ -85,7 +85,7 @@ export function AiAssistantPanel({
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-center">
-            <Sparkles className="h-5 w-5 text-accent" />
+            <Sparkles className="h-5 w-5 text-accent-ink" />
             <p className="text-sm font-medium text-foreground">Ask anything, across all your knowledge vaults</p>
             <p className="text-xs text-muted">
               I can also archive a link you share, run research on demand, or help start a new knowledge vault.
@@ -98,7 +98,7 @@ export function AiAssistantPanel({
                 <span
                   className={cn(
                     "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                    m.role === "user" ? "bg-accent text-accent-foreground" : "bg-accent-soft text-accent"
+                    m.role === "user" ? "bg-accent text-accent-foreground" : "bg-accent-soft text-accent-ink"
                   )}
                 >
                   {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
@@ -115,7 +115,7 @@ export function AiAssistantPanel({
                   </div>
                   {m.suggestedKnowledgeBase && (
                     <div className="rounded-xl border border-accent/30 bg-accent-soft p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-accent">New knowledge vault</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-accent-ink">New knowledge vault</p>
                       <p className="mt-1 text-sm text-foreground">&ldquo;{m.suggestedKnowledgeBase.goal}&rdquo;</p>
                       <Button
                         size="sm"

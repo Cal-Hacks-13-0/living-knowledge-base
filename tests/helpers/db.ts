@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db/prisma";
 
 /** Wipes all rows between tests. Order matters for FK constraints. */
 export async function resetDb() {
+  await prisma.inboxDigest.deleteMany();
+  await prisma.inboxEvent.deleteMany();
   await prisma.insightEvidence.deleteMany();
   await prisma.knowledgeChangeProposal.deleteMany();
   await prisma.insight.deleteMany();

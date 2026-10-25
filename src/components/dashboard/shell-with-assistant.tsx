@@ -19,12 +19,10 @@ import { AssistantContext } from "@/components/assistant/assistant-context";
 export function ShellWithAssistant({
   knowledgeBases,
   inboxCount,
-  userEmail,
   children,
 }: {
   knowledgeBases: SidebarKnowledgeBase[];
   inboxCount: number;
-  userEmail?: string;
   children: React.ReactNode;
 }) {
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -35,7 +33,7 @@ export function ShellWithAssistant({
   return (
     <AssistantContext.Provider value={{ open: assistantOpen, toggle: () => setAssistantOpen((o) => !o) }}>
       <div className="flex h-dvh">
-        <Sidebar knowledgeBases={knowledgeBases} inboxCount={inboxCount} userEmail={userEmail} />
+        <Sidebar knowledgeBases={knowledgeBases} inboxCount={inboxCount} />
         <main
           className="flex-1 overflow-y-auto transition-[margin] duration-200"
           style={{ marginRight: assistantOpen ? AI_ASSISTANT_PANEL_WIDTH : 0 }}

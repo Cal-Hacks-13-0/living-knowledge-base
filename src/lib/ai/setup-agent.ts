@@ -21,7 +21,9 @@ renders these as multi-selectable quick-pick chips plus a free-text field for an
 not listed, so even an open-ended question needs 3 representative example answers (e.g.
 for "what's your experience level?" give 3 concrete levels; for "which technologies?"
 give 3 likely ones). Never ask a question whose answer is already obvious from the goal
-text already provided.`;
+text already provided.
+
+In any text the user will read, call their collection a "knowledge vault" (never "knowledge base").`;
 
 export async function generateSetupQuestions(
   userGoal: string,

@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className="flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent">
+          <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent-ink">
             <BookOpen className="h-5 w-5" />
           </span>
           <h1 className="text-2xl font-semibold text-foreground">Sign in to Axion</h1>

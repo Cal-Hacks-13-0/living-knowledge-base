@@ -173,6 +173,7 @@ export async function runResearch(
             extraction,
             comparison,
             sourceDocumentId,
+            origin: trigger === "scheduled" ? "scheduled_scan" : "manual_scan",
           });
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
@@ -258,7 +259,6 @@ export async function runResearch(
     });
     throw err;
   } finally {
-    void trigger; // retained for logging/analytics symmetry with scheduled runs
     // Resync the Markdown vault regardless of outcome — even a partial/failed
     // run may have stored new documents/entries worth reflecting on disk.
     await syncKnowledgeBaseToVaultSafe(knowledgeBaseId);

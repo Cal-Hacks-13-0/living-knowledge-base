@@ -4,20 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, Home, Search, Inbox, Settings, Plus, Library, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEMO_IDENTITY } from "@/lib/demo-identity";
 
 export interface SidebarKnowledgeBase {
   id: string;
   name: string;
 }
 
+// Forest Green sidebar: Paper White text, Original Sage icons, Deep Sage for the selected item.
+const navItem = "rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-icon";
+const navIdle = "text-sidebar-foreground hover:bg-sidebar-hover";
+const navActive = "bg-sidebar-active text-sidebar-foreground";
+
 export function Sidebar({
   knowledgeBases,
   inboxCount,
-  userEmail,
 }: {
   knowledgeBases: SidebarKnowledgeBase[];
   inboxCount: number;
-  userEmail?: string;
 }) {
   const pathname = usePathname();
 
@@ -29,10 +33,10 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-white">
+    <aside className="flex h-full w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2 px-4 py-4">
-        <BookOpen className="h-4 w-4 text-accent" />
-        <span className="text-sm font-semibold text-foreground">Axion</span>
+        <BookOpen className="h-4 w-4 text-sidebar-icon" />
+        <span className="text-sm font-semibold">Axion</span>
       </div>
 
       <nav className="flex flex-col gap-0.5 px-2">
@@ -42,17 +46,15 @@ export function Sidebar({
             <Link
               key={href}
               href={href}
-              className={cn(
-                "flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
-                active ? "bg-accent-soft text-accent" : "text-foreground hover:bg-surface"
-              )}
+              aria-current={active ? "page" : undefined}
+              className={cn("flex items-center justify-between gap-2 font-medium", navItem, active ? navActive : navIdle)}
             >
               <span className="flex items-center gap-2">
-                <Icon className="h-4 w-4" />
+                <Icon className={cn("h-4 w-4", active ? "text-sidebar-foreground" : "text-sidebar-icon")} />
                 {label}
               </span>
               {!!badge && (
-                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
+                <span className="rounded-full bg-sidebar-icon px-1.5 py-0.5 text-[10px] font-semibold text-sidebar">
                   {badge}
                 </span>
               )}
@@ -63,18 +65,16 @@ export function Sidebar({
 
       <div className="mt-6 flex flex-1 flex-col overflow-hidden px-2">
         <div className="px-2.5 pb-1.5">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">Knowledge vaults</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-sidebar-muted">Knowledge vaults</span>
         </div>
 
         <div className="flex flex-col gap-0.5 overflow-y-auto">
           <Link
             href="/knowledge"
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors",
-              pathname === "/knowledge" ? "bg-accent-soft text-accent" : "text-foreground hover:bg-surface"
-            )}
+            aria-current={pathname === "/knowledge" ? "page" : undefined}
+            className={cn("flex items-center gap-2", navItem, pathname === "/knowledge" ? navActive : navIdle)}
           >
-            <Library className="h-3.5 w-3.5 shrink-0 text-muted" />
+            <Library className="h-3.5 w-3.5 shrink-0 text-sidebar-icon" />
             All Knowledge
           </Link>
 
@@ -84,9 +84,11 @@ export function Sidebar({
               <Link
                 key={kb.id}
                 href={`/kb/${kb.id}`}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "truncate rounded-lg px-2.5 py-1.5 pl-8 text-sm transition-colors",
-                  active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface hover:text-foreground"
+                  "truncate pl-8",
+                  navItem,
+                  active ? navActive : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
                 )}
                 title={kb.name}
               >
@@ -97,7 +99,10 @@ export function Sidebar({
 
           <Link
             href="/new"
-            className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 pl-8 text-sm text-muted hover:bg-surface hover:text-foreground"
+            className={cn(
+              "flex items-center gap-2 pl-8 text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
+              navItem
+            )}
           >
             <Plus className="h-3.5 w-3.5" />
             New knowledge vault
@@ -105,24 +110,30 @@ export function Sidebar({
         </div>
       </div>
 
-      {userEmail && (
-        <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
+      <div className="flex items-center justify-between gap-2 border-t border-sidebar-hover px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span
+            aria-hidden
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-active text-xs font-semibold text-sidebar-foreground"
+          >
+            {DEMO_IDENTITY.initials}
+          </span>
           <div className="min-w-0">
-            <p className="truncate text-xs font-medium text-foreground">{userEmail.split("@")[0]}</p>
-            <p className="truncate text-xs text-muted">{userEmail}</p>
+            <p className="truncate text-xs font-medium">{DEMO_IDENTITY.name}</p>
+            <p className="truncate text-xs text-sidebar-muted">{DEMO_IDENTITY.email}</p>
           </div>
-          <form action="/api/auth/logout" method="post">
-            <button
-              type="submit"
-              aria-label="Sign out"
-              title="Sign out"
-              className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </form>
         </div>
-      )}
+        <form action="/api/auth/logout" method="post">
+          <button
+            type="submit"
+            aria-label="Sign out"
+            title="Sign out"
+            className="rounded-md p-1.5 text-sidebar-icon hover:bg-sidebar-hover hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-icon"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }

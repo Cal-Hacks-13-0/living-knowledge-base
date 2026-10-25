@@ -297,7 +297,7 @@ function ResultRow({
 function ResultMeta({ icon, type, children }: { icon: React.ReactNode; type: string; children?: React.ReactNode }) {
   return (
     <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted">
-      <span className="inline-flex items-center gap-1 font-medium text-accent">
+      <span className="inline-flex items-center gap-1 font-medium text-accent-ink">
         {icon}
         {type}
       </span>

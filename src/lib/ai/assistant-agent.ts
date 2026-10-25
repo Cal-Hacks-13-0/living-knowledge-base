@@ -58,7 +58,9 @@ Rules:
 - After using a tool, summarize what actually happened (the tool's result) in your own
   words — don't just repeat it verbatim, and don't claim something succeeded if the tool
   result says otherwise.
-- Be concise — this is a sidebar chat, not a report.`;
+- Be concise — this is a sidebar chat, not a report.
+
+In any text the user will read, call their collection a "knowledge vault" (never "knowledge base").`;
 
 export async function answerAssistantQuestion({
   knowledgeBases,

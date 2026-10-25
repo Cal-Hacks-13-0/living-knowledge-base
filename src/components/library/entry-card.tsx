@@ -41,7 +41,7 @@ export function EntryCard({ entry, highlighted = false }: { entry: EntryCardData
           <span>Created {formatDate(entry.createdAt)}</span>
           <span>Updated {formatDate(entry.updatedAt)}</span>
           {entry.sourceDocument && (
-            <a href={entry.sourceDocument.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
+            <a href={entry.sourceDocument.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent-ink hover:underline">
               Source <ExternalLink className="h-3 w-3" />
             </a>
           )}

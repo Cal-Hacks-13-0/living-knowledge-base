@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import type { ProposalOperation } from "@prisma/client";
+import { resolveProposalEvent } from "@/lib/inbox/events";
 
 export interface ProposedContentPayload {
   operation: ProposalOperation;
@@ -94,19 +95,26 @@ export async function approveProposal(proposalId: string) {
       }
     }
 
-    return tx.knowledgeChangeProposal.update({
+    const approved = await tx.knowledgeChangeProposal.update({
       where: { id: proposalId },
       data: { status: "APPROVED", reviewedAt: new Date() },
     });
+    // Same transaction: the Inbox only says "applied" if the entry change committed.
+    await resolveProposalEvent(proposalId, "APPLIED", tx);
+    return approved;
   });
 }
 
 export async function rejectProposal(proposalId: string) {
-  const proposal = await prisma.knowledgeChangeProposal.findUnique({ where: { id: proposalId } });
-  if (!proposal) throw new Error("Proposal not found");
-  if (proposal.status !== "PENDING") throw new Error("Proposal already reviewed");
-  return prisma.knowledgeChangeProposal.update({
-    where: { id: proposalId },
-    data: { status: "REJECTED", reviewedAt: new Date() },
+  return prisma.$transaction(async (tx) => {
+    const proposal = await tx.knowledgeChangeProposal.findUnique({ where: { id: proposalId } });
+    if (!proposal) throw new Error("Proposal not found");
+    if (proposal.status !== "PENDING") throw new Error("Proposal already reviewed");
+    const rejected = await tx.knowledgeChangeProposal.update({
+      where: { id: proposalId },
+      data: { status: "REJECTED", reviewedAt: new Date() },
+    });
+    await resolveProposalEvent(proposalId, "DECLINED", tx);
+    return rejected;
   });
 }

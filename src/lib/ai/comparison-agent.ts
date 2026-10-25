@@ -23,7 +23,9 @@ Important judgment rules:
   CONTRADICTION or REPLACEMENT_CANDIDATE, propose a change but both sides of a
   contradiction must be preserved for human review (the proposedChange is a suggestion,
   not an automatic overwrite).
-- If nothing closely relates, classification is UNRELATED and relatedEntryId is null.`;
+- If nothing closely relates, classification is UNRELATED and relatedEntryId is null.
+
+In any text the user will read, call their collection a "knowledge vault" (never "knowledge base").`;
 
 export async function compareKnowledge({
   extraction,

@@ -24,7 +24,9 @@ Produce:
   "prefer official sources over blogs when contradictions appear").
 
 Never invent a precise URL and claim it is verified. Be concrete about categories —
-avoid generic filler like "Miscellaneous".`;
+avoid generic filler like "Miscellaneous".
+
+In any text the user will read, call their collection a "knowledge vault" (never "knowledge base").`;
 
 export interface OnboardingPreferences {
   monitoringFrequency?: string;

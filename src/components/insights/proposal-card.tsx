@@ -71,7 +71,7 @@ export function ProposalCard({ proposal }: { proposal: ProposalCardData }) {
             )}
           </div>
           <div className="rounded-lg border border-accent/30 bg-accent-soft p-3">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-accent">Proposed</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-accent-ink">Proposed</p>
             <p className="text-sm text-foreground">{parsed?.proposed.summary ?? "—"}</p>
           </div>
         </div>

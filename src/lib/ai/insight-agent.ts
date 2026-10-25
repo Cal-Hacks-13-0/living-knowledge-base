@@ -20,7 +20,9 @@ Insight types:
 - CONTRADICTION: conflicts with existing knowledge (present it neutrally; do not declare
   a winner).
 - OUTDATED_INFORMATION: strong evidence an existing entry is no longer accurate/applicable.
-- ACTIONABLE_OPPORTUNITY: something the user could concretely act on given their goal.`;
+- ACTIONABLE_OPPORTUNITY: something the user could concretely act on given their goal.
+
+In any text the user will read, call their collection a "knowledge vault" (never "knowledge base").`;
 
 export interface InsightFinding {
   index: number;

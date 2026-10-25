@@ -53,7 +53,7 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-sm text-accent"
+            className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-sm text-accent-ink"
           >
             {tag}
             <button type="button" onClick={() => removeTag(tag)} aria-label={`Remove ${tag}`}>
@@ -77,7 +77,7 @@ export function TagInput({
               key={s}
               type="button"
               onClick={() => addTag(s)}
-              className="rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted hover:border-accent/40 hover:text-accent"
+              className="rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted hover:border-accent/40 hover:text-accent-ink"
             >
               + {s}
             </button>

@@ -88,6 +88,7 @@ model KnowledgeBase {
   insights    Insight[]
   researchRuns ResearchRun[]
   proposals   KnowledgeChangeProposal[]
+  inboxEvents InboxEvent[]
 
   @@index([createdAt])
 }
@@ -167,6 +168,7 @@ model KnowledgeEntry {
   sourceDocument  SourceDocument?     @relation(fields: [sourceDocumentId], references: [id], onDelete: SetNull)
   insightEvidence InsightEvidence[]
   proposalTargets KnowledgeChangeProposal[]
+  inboxEvents     InboxEvent[]
 
   @@index([knowledgeBaseId])
   @@index([categoryId])
@@ -241,4 +243,66 @@ model KnowledgeChangeProposal {
 
   @@index([knowledgeBaseId])
   @@index([status])
+}
+
+// --- Inbox ------------------------------------------------------------------
+// A persistent, workspace-scoped feed of changes the system made or proposed
+// (see lib/inbox/events.ts). Events are written only after the underlying
+// change succeeds; `dedupeKey` makes recording idempotent across retries.
+
+enum InboxEventCategory {
+  EXTERNAL_DISCOVERY
+  CORRECTION
+  SOURCE_REFRESH
+  NEW_CONNECTION
+}
+
+enum InboxEventStatus {
+  APPLIED
+  PROPOSED
+  DECLINED
+}
+
+model InboxEvent {
+  id               String             @id @default(cuid())
+  workspaceId      String
+  dedupeKey        String
+  category         InboxEventCategory
+  status           InboxEventStatus
+  knowledgeBaseId  String
+  knowledgeEntryId String?
+  proposalId       String?
+  title            String
+  description      String
+  origin           String // "manual_scan" | "scheduled_scan" | "assistant_archive"
+  sourceName       String?
+  sourceUrl        String?
+  evidence         String?
+  beforeContent    String?
+  afterContent     String?
+  occurredAt       DateTime           @default(now())
+  resolvedAt       DateTime?
+  updatedAt        DateTime           @updatedAt
+
+  knowledgeBase  KnowledgeBase   @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  knowledgeEntry KnowledgeEntry? @relation(fields: [knowledgeEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, dedupeKey])
+  @@index([workspaceId, occurredAt])
+  @@index([proposalId])
+}
+
+// Cached AI write-ups of the Inbox (the short overview and the detailed
+// weekly review), keyed by date range and a fingerprint of the events they
+// were generated from — a changed fingerprint means regenerate.
+model InboxDigest {
+  id          String   @id @default(cuid())
+  workspaceId String
+  kind        String // "overview" | "review"
+  rangeKey    String // "<start ISO date>_<end ISO date>"
+  fingerprint String
+  content     String // JSON
+  createdAt   DateTime @default(now())
+
+  @@unique([workspaceId, kind, rangeKey])
 }

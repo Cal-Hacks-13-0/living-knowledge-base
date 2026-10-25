@@ -14,7 +14,7 @@ export function Chip({
       className={cn(
         "rounded-full border px-3 py-1.5 text-sm transition-colors",
         selected
-          ? "border-accent bg-accent-soft text-accent"
+          ? "border-accent bg-accent-soft text-accent-ink"
           : "border-border bg-white text-foreground hover:bg-surface",
         className
       )}

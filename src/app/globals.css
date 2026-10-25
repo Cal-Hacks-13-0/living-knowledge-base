@@ -1,14 +1,25 @@
 @import "tailwindcss";
 
+/* Axion palette. Exact brand values, plus a few derived shades (marked) for
+   hover, muted text, and sidebar text that keep WCAG AA contrast. */
 :root {
-  --background: #ffffff;
-  --foreground: #1c1c1e;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --surface: #fafafa;
-  --accent: #4f46e5;
+  --background: #fafaf7; /* Paper White — page background */
+  --foreground: #25332b; /* Deep Ink — headings and body text */
+  --muted: #5c6b62; /* derived from Deep Ink: secondary text (≥4.9:1 on Paper/Mint) */
+  --border: #dce4db; /* Soft Border — borders and dividers */
+  --surface: #f1f5ef; /* derived from Soft Mint: hover and subtle fills */
+  --card: #ffffff; /* Card White — cards and expanded content */
+  --accent: #547a61; /* Sage Green — primary buttons */
   --accent-foreground: #ffffff;
-  --accent-soft: #eef2ff;
+  --accent-soft: #edf2eb; /* Soft Mint — AI overview and assistant surfaces */
+  --accent-ink: #3b5949; /* Deep Sage — links and interactive text on light backgrounds */
+  --accent-decor: #a6b9a3; /* Original Sage — decorative accents only (not body text) */
+  --sidebar: #263e35; /* Forest Green */
+  --sidebar-foreground: #fafaf7; /* Paper White */
+  --sidebar-muted: #c3d1c0; /* derived: secondary sidebar text (7.2:1 on Forest) */
+  --sidebar-icon: #a6b9a3; /* Original Sage: sidebar icons (5.5:1 on Forest) */
+  --sidebar-active: #3b5949; /* Deep Sage — selected navigation */
+  --sidebar-hover: #2f4a3f; /* derived: between Forest and Deep Sage */
 }
 
 @theme inline {
@@ -20,6 +31,15 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-decor: var(--accent-decor);
+  --color-card: var(--card);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-icon: var(--sidebar-icon);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-hover: var(--sidebar-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
