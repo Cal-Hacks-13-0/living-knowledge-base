@@ -17,7 +17,9 @@ const log: ("warn" | "error")[] = process.env.NODE_ENV === "development" ? ["war
 function createPrismaClient(): PrismaClient {
   const tursoUrl = process.env.TURSO_DATABASE_URL;
   if (tursoUrl) {
-    const adapter = new PrismaLibSQL({ url: tursoUrl, authToken: process.env.TURSO_AUTH_TOKEN });
+    // The Vercel Marketplace integration (prefix TURSO_DATABASE) names the token TURSO_DATABASE_TURSO_AUTH_TOKEN.
+    const authToken = process.env.TURSO_AUTH_TOKEN ?? process.env.TURSO_DATABASE_TURSO_AUTH_TOKEN;
+    const adapter = new PrismaLibSQL({ url: tursoUrl, authToken });
     return new PrismaClient({ adapter, log });
   }
   return new PrismaClient({ log });

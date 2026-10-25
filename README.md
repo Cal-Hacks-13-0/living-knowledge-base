@@ -298,7 +298,7 @@ treated as production-ready multi-user security.
   | Name | Purpose |
   |---|---|
   | `TURSO_DATABASE_URL` | Turso database URL (`libsql://…`) |
-  | `TURSO_AUTH_TOKEN` | Turso auth token |
+  | `TURSO_AUTH_TOKEN` | Turso auth token (the Vercel Turso integration names it `TURSO_DATABASE_TURSO_AUTH_TOKEN`; either works) |
   | `ANTHROPIC_API_KEY` | Claude API key for all AI features |
   | `ANTHROPIC_MODEL` | Optional model override |
   | `VAULT_DIR` | Set to `/tmp/vault` (best-effort Markdown export; `/tmp` is temporary) |

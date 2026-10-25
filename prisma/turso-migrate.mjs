@@ -15,7 +15,9 @@ if (!url) {
   process.exit(1);
 }
 
-const db = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN });
+// TURSO_DATABASE_TURSO_AUTH_TOKEN is the name the Vercel Marketplace integration uses.
+const authToken = process.env.TURSO_AUTH_TOKEN ?? process.env.TURSO_DATABASE_TURSO_AUTH_TOKEN;
+const db = createClient({ url, authToken });
 const migrationsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
 await db.execute(
