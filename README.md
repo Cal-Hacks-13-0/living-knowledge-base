@@ -7,6 +7,9 @@ matter, and brings you what's new, so you don't have to keep checking them yours
 It works for any subject: a programming framework, a hobby like rock climbing or drumming,
 a business idea, a research area.
 
+And everything Axion learns is also saved as **plain Markdown files**: readable, portable,
+and yours.
+
 ---
 
 ## What you can do with it
@@ -29,8 +32,38 @@ a business idea, a research area.
 - **Keep your vault healthy.** The Sources tab explains in plain language when a website
   can't be read (page moved, access denied, and so on) and lets you fix the address or
   check again.
-- **Take your notes anywhere.** Every vault is also saved as a folder of Markdown files
-  you can open in Obsidian or any text editor.
+- **Own your knowledge in Markdown.** Every vault is also saved as a folder of plain
+  Markdown files, kept in sync automatically (more below).
+
+## Your knowledge, in plain Markdown
+
+Every vault is automatically saved as a folder of ordinary Markdown (`.md`) files, and
+updated every time something changes: new notes, insights, approved proposals, edits.
+This is one of Axion's best features:
+
+- **Readable by anyone.** Markdown is just text with light formatting. Open it in any
+  editor and it makes sense, no app required.
+- **Works with Obsidian out of the box.** Notes link to their categories with
+  `[[wikilinks]]`, so you can browse a vault as a connected graph.
+- **Great for AI tools.** Other AI assistants and agents can read your vaults directly
+  from the files. Markdown is a format they handle especially well.
+- **Portable, with no lock-in.** Copy the folder, search it, back it up, or put it in Git.
+  Your knowledge isn't trapped inside Axion.
+
+Each vault becomes a tidy folder:
+
+```
+vault/drumming-foundations/
+  _Overview.md          the goal, description, categories and sources
+  01_Sources/           one file per source, listing what was fetched
+  02_Knowledge/         your notes, in one folder per category
+  03_Insights/          highlights, with links to their evidence
+  04_Proposals/         suggested changes waiting for your review
+```
+
+The files are saved to the `vault/` folder (change it with `VAULT_DIR`). The app's
+database stays the main record and the Markdown is a complete copy kept in sync. Edits
+you make to the files aren't read back into the app.
 
 ## The idea in one picture
 
@@ -107,7 +140,9 @@ It's safe to run more than once: it only applies changes that haven't been appli
   There are no individual accounts.
 - Automatic Daily/Weekly/Monthly research doesn't run on Vercel. Use **Run Research Now**.
   (On your own computer, automatic research runs while the app is open.)
-- The Markdown export is temporary on Vercel; your real data lives in the database.
+- On Vercel, the Markdown copy is written to temporary storage, so it doesn't last
+  between visits; your data itself is safe in the database. Run Axion on your own
+  computer to keep a permanent Markdown folder.
 
 ---
 
