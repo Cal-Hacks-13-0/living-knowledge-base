@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Decorative homepage background: a static field of faint stars, and a fixed,
+ * Decorative homepage background: a dome of faint stars and a fixed,
  * round, loosely-wired 3D knowledge graph (hubs and spokes) at the centre of the
  * viewport, drawn with Canvas 2D and a simple perspective projection.
- * The graph is generated once from a seed (stable topology); the whole graph
- * rotates as one group, eased toward an orientation derived from the cursor.
+ * The graph and stars are generated once from seeds (stable); the whole scene
+ * — graph and star dome — rotates as one group, eased toward an orientation derived from the cursor.
  * It never spins on its own, ignores touch, and stays still under
  * prefers-reduced-motion. The canvas is pointer-transparent.
  */
@@ -18,7 +18,8 @@ const MAX_PITCH = (37 * Math.PI) / 180;
 const REST_YAW = 0.35;
 const REST_PITCH = -0.22;
 const EASE_PER_SECOND = 4;
-const STAR_DENSITY = 1 / 3800; // stars per px² of viewport
+// Stars live on a sky dome around the scene and turn with it (~270 on screen at 1280×800).
+const STAR_COUNT = 2400;
 const EDGE_BUCKETS = 10;
 const MAX_DPR = 2;
 
@@ -193,28 +194,32 @@ function buildGraph(): Graph {
 let cachedGraph: Graph | null = null;
 
 interface Stars {
-  /** Normalised 0..1 viewport positions, xy interleaved (stable across resizes). */
-  pos: Float32Array;
+  /** Unit directions on the sky dome, xyz interleaved. */
+  dir: Float32Array;
   size: Float32Array;
   style: string[];
 }
 
-/** A fixed, seeded starfield: mostly tiny dim points, a few slightly brighter ones. */
-function buildStars(count: number): Stars {
+/** A fixed, seeded star dome: mostly tiny dim points, a few slightly brighter ones. */
+function buildStars(): Stars {
   const rand = mulberry32(0x57a2);
-  const pos = new Float32Array(count * 2);
-  const size = new Float32Array(count);
+  const dir = new Float32Array(STAR_COUNT * 3);
+  const size = new Float32Array(STAR_COUNT);
   const style: string[] = [];
-  for (let i = 0; i < count; i++) {
-    pos[i * 2] = rand();
-    pos[i * 2 + 1] = rand();
+  for (let i = 0; i < STAR_COUNT; i++) {
+    const u = rand() * 2 - 1;
+    const t = rand() * Math.PI * 2;
+    const r = Math.sqrt(1 - u * u);
+    dir[i * 3] = r * Math.cos(t);
+    dir[i * 3 + 1] = u;
+    dir[i * 3 + 2] = r * Math.sin(t);
     const bright = rand() < 0.06;
     size[i] = bright ? 0.9 + rand() * 0.5 : 0.35 + rand() * 0.5;
     const alpha = bright ? 0.4 + rand() * 0.2 : 0.1 + rand() * 0.25;
     const shade = Math.round(200 + rand() * 55);
     style.push(`rgba(${shade},${shade},${shade},${alpha.toFixed(3)})`);
   }
-  return { pos, size, style };
+  return { dir, size, style };
 }
 
 let cachedStars: Stars | null = null;
@@ -245,7 +250,6 @@ export function NetworkSphere() {
     let targetPitch = REST_PITCH;
     let cx = 0;
     let cy = 0;
-    let starCount = 0;
     let raf = 0;
     let last = 0;
 
@@ -260,8 +264,6 @@ export function NetworkSphere() {
       // The sphere sits at the centre of the screen, independent of the page layout.
       cx = width / 2;
       cy = height / 2;
-      starCount = Math.round(width * height * STAR_DENSITY);
-      if (!cachedStars || cachedStars.size.length < starCount) cachedStars = buildStars(Math.max(starCount, 600));
     };
 
     const draw = () => {
@@ -292,12 +294,26 @@ export function NetworkSphere() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
-      // Stars: static, behind the graph, never rotated.
-      const stars = cachedStars!;
-      for (let i = 0; i < starCount; i++) {
+      // Stars: the far side of a sky dome, turned by the same rotation as the
+      // graph, so the whole universe moves together. Seen from the centre.
+      const stars = (cachedStars ??= buildStars());
+      const focal = Math.max(width, height) * 0.5;
+      const sd = stars.dir;
+      for (let i = 0; i < STAR_COUNT; i++) {
+        const x0 = sd[i * 3];
+        const y0 = sd[i * 3 + 1];
+        const z0 = sd[i * 3 + 2];
+        const x1 = x0 * cosY + z0 * sinY;
+        const z1 = -x0 * sinY + z0 * cosY;
+        const y2 = y0 * cosP - z1 * sinP;
+        const z2 = y0 * sinP + z1 * cosP;
+        if (z2 > -0.2) continue; // only the dome behind the scene
+        const px = cx + (x1 / -z2) * focal;
+        const py = cy + (y2 / -z2) * focal;
+        if (px < -2 || py < -2 || px > width + 2 || py > height + 2) continue;
         ctx.fillStyle = stars.style[i];
         ctx.beginPath();
-        ctx.arc(stars.pos[i * 2] * width, stars.pos[i * 2 + 1] * height, stars.size[i], 0, Math.PI * 2);
+        ctx.arc(px, py, stars.size[i], 0, Math.PI * 2);
         ctx.fill();
       }
 
