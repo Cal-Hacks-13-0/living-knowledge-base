@@ -24,12 +24,13 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <AiAssistantTrigger />
           <Link href="/new">
             <Button>
               <Sparkles className="h-4 w-4" /> New knowledge vault
             </Button>
           </Link>
+          {/* Last, so its reserved space sits under the pinned top-right button. */}
+          <AiAssistantTrigger />
         </div>
       </div>
 
