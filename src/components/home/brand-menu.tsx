@@ -3,7 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, ChevronDown, Home, Inbox, LogOut, Search, Settings } from "lucide-react";
+import { ChevronDown, Home, Inbox, LogOut, Search, Settings } from "lucide-react";
+import { AxionLogo } from "@/components/brand/axion-logo";
 import { cn } from "@/lib/utils";
 
 // Same destinations and icons as the sidebar's top nav (components/dashboard/sidebar.tsx),
@@ -74,11 +75,11 @@ export function BrandMenu({ inboxCount }: { inboxCount: number }) {
             setOpen(true);
           }
         }}
-        className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       >
-        <BookOpen className="h-4 w-4 text-accent-strong" />
-        <span className="text-sm font-semibold text-foreground">Axion</span>
-        <ChevronDown className={cn("h-3.5 w-3.5 text-muted transition-transform", open && "rotate-180")} />
+        <AxionLogo className="h-8 w-auto text-foreground" />
+        <span className="text-lg font-semibold text-foreground">Axion</span>
+        <ChevronDown className={cn("h-4 w-4 text-muted transition-transform", open && "rotate-180")} />
       </button>
 
       {open && (

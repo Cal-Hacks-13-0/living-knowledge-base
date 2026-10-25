@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Home, Search, Inbox, Settings, Plus, Library, LogOut } from "lucide-react";
+import { Home, Search, Inbox, Settings, Plus, Library, LogOut } from "lucide-react";
+import { AxionLogo } from "@/components/brand/axion-logo";
 import { cn } from "@/lib/utils";
 import { DEMO_IDENTITY } from "@/lib/demo-identity";
 
@@ -35,7 +36,7 @@ export function Sidebar({
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2 px-4 py-4">
-        <BookOpen className="h-4 w-4 text-sidebar-icon" />
+        <AxionLogo className="h-6 w-auto text-sidebar-foreground" />
         <span className="text-sm font-semibold">Axion</span>
       </div>
 

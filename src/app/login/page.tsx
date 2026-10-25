@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BookOpen } from "lucide-react";
+import { AxionLogo } from "@/components/brand/axion-logo";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className="flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent-strong">
-            <BookOpen className="h-5 w-5" />
-          </span>
+          <AxionLogo className="mb-4 h-12 w-auto text-foreground" />
           <h1 className="text-2xl font-semibold text-foreground">Sign in to Axion</h1>
           <p className="mt-1 text-sm text-muted">Enter the workspace password to continue.</p>
         </div>
