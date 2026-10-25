@@ -113,7 +113,7 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
               <p className="text-sm font-medium text-foreground">
                 {pendingInsights} insight(s) and {pendingProposals} proposed change(s) await your review.
               </p>
-              <p className="text-xs text-muted">Nothing is applied to your knowledge base until you approve it.</p>
+              <p className="text-xs text-muted">Nothing is applied to your knowledge vault until you approve it.</p>
             </div>
             <Link href={`/kb/${id}/insights`} className="text-sm font-medium text-accent">
               Review now →

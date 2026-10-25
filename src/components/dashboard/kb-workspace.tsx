@@ -32,7 +32,7 @@ export function KbWorkspace({
         <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">Knowledge base</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">Knowledge vault</p>
               <h1 className="text-xl font-semibold text-foreground">{knowledgeBaseName}</h1>
             </div>
             <Button variant="secondary" size="sm" onClick={() => setAssistantOpen((o) => !o)}>

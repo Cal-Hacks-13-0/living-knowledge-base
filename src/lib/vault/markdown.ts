@@ -59,7 +59,7 @@ ${categoryLinks}
 ${sourceLines}
 
 ---
-_This file is auto-generated from the Living Knowledge Base app's database — edits here
+_This file is auto-generated from the Axion app's database — edits here
 are not synced back. See \`02_Knowledge/\` for entries, \`03_Insights/\` for insights,
 \`04_Proposals/\` for pending review items._
 `;

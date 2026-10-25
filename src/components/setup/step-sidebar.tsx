@@ -12,7 +12,7 @@ export function StepSidebar({ steps, currentIndex }: { steps: WizardStep[]; curr
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-white px-4 py-5">
       <Link href="/" className="mb-8 flex items-center gap-2 text-sm font-semibold text-foreground">
         <BookOpen className="h-4 w-4 text-accent" />
-        Knowledge
+        Axion
       </Link>
       <nav className="flex flex-col gap-1">
         {steps.map((step, index) => {

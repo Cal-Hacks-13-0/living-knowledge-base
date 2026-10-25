@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Living Knowledge Base",
+  title: "Axion",
   description: "AI-powered knowledge management that keeps discovering, so you don't have to.",
 };
 

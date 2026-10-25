@@ -161,7 +161,7 @@ call to this function:
 | Agent | File | In -> Out |
 |---|---|---|
 | Setup | `setup-agent.ts` | goal + prior answers -> ≤3 dynamic onboarding questions |
-| Blueprint | `blueprint-agent.ts` | goal + answers -> name/description/categories/sources/frequency/rules. Merges in deterministic "verified" sources from `research/known-sources.ts` (an hnrss.org keyword feed + recognized GitHub repos) since the model can't confirm URLs are live |
+| Blueprint | `blueprint-agent.ts` | goal + answers -> name/description/categories/sources/frequency/rules. Merges in deterministic "verified" sources from `research/known-sources.ts` (recognized GitHub repos; Hacker News is filtered out of drafted blueprints) since the model can't confirm URLs are live |
 | Extraction | `extraction-agent.ts` | one fetched document -> summary/claims/topics/excerpts (treats document content as untrusted data, explicitly told to ignore embedded instructions) |
 | Comparison | `comparison-agent.ts` | new extraction + candidate existing entries -> DUPLICATE/EXTENSION/CONTRADICTION/REPLACEMENT_CANDIDATE/UNRELATED + optional proposed change |
 | Insight | `insight-agent.ts` | all findings from one run + existing entries -> ≤3 ranked insights, often zero |

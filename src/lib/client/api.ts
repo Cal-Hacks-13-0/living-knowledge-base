@@ -29,8 +29,8 @@ async function handle<T>(res: Response): Promise<T> {
   return body.data as T;
 }
 
-export async function apiGet<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
+export async function apiGet<T>(url: string, init?: { signal?: AbortSignal }): Promise<T> {
+  const res = await fetch(url, { cache: "no-store", signal: init?.signal });
   return handle<T>(res);
 }
 

@@ -32,3 +32,12 @@ body {
 * {
   border-color: var(--border);
 }
+
+/* Homepage folder (components/home/knowledge-library.tsx): its transitions are
+   inline styles, so reduced motion has to override them from here. */
+@media (prefers-reduced-motion: reduce) {
+  [data-folder-motion] {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+}

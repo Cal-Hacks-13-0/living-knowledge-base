@@ -32,7 +32,7 @@ export function Sidebar({
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-white">
       <div className="flex items-center gap-2 px-4 py-4">
         <BookOpen className="h-4 w-4 text-accent" />
-        <span className="text-sm font-semibold text-foreground">Knowledge</span>
+        <span className="text-sm font-semibold text-foreground">Axion</span>
       </div>
 
       <nav className="flex flex-col gap-0.5 px-2">
@@ -62,11 +62,8 @@ export function Sidebar({
       </nav>
 
       <div className="mt-6 flex flex-1 flex-col overflow-hidden px-2">
-        <div className="flex items-center justify-between px-2.5 pb-1.5">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">Knowledge bases</span>
-          <Link href="/new" aria-label="New knowledge base" className="text-muted hover:text-accent">
-            <Plus className="h-3.5 w-3.5" />
-          </Link>
+        <div className="px-2.5 pb-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">Knowledge vaults</span>
         </div>
 
         <div className="flex flex-col gap-0.5 overflow-y-auto">
@@ -103,7 +100,7 @@ export function Sidebar({
             className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 pl-8 text-sm text-muted hover:bg-surface hover:text-foreground"
           >
             <Plus className="h-3.5 w-3.5" />
-            New knowledge base
+            New knowledge vault
           </Link>
         </div>
       </div>

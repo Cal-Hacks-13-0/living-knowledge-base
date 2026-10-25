@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id } = await params;
     const kb = await prisma.knowledgeBase.findUnique({ where: { id } });
-    if (!kb) throw new NotFoundError(`Knowledge base not found: ${id}`);
+    if (!kb) throw new NotFoundError(`Knowledge vault not found: ${id}`);
 
     const body = CreateSourceRequestSchema.parse(await req.json());
     const validation = validateUrl(body.url);
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const existing = await prisma.source.findUnique({
       where: { knowledgeBaseId_url: { knowledgeBaseId: id, url: body.url } },
     });
-    if (existing) return fail("This source URL is already tracked for this knowledge base.", 409);
+    if (existing) return fail("This source URL is already tracked for this knowledge vault.", 409);
 
     const source = await prisma.source.create({
       data: { knowledgeBaseId: id, name: body.name, url: body.url, type: body.type },

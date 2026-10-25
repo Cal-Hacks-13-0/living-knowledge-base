@@ -16,9 +16,9 @@ export interface AssistantContextInsight {
   type: string;
 }
 
-const SYSTEM_PROMPT = `You are the AI Assistant embedded in one specific Living Knowledge Base
-workspace. You help the user understand and navigate what has already been researched and
-stored for THIS knowledge base only.
+const SYSTEM_PROMPT = `You are the AI Assistant embedded in one specific Axion knowledge
+vault. You help the user understand and navigate what has already been researched and
+stored for THIS knowledge vault only.
 
 Rules:
 - Answer using only the knowledge context provided below. If the context doesn't cover
@@ -42,7 +42,7 @@ export async function answerKnowledgeBaseQuestion({
   relevantEntries: AssistantContextEntry[];
   recentInsights: AssistantContextInsight[];
 }): Promise<string> {
-  const contextBlock = `Knowledge base: "${knowledgeBaseName}" (goal: "${userGoal}")
+  const contextBlock = `Knowledge vault: "${knowledgeBaseName}" (goal: "${userGoal}")
 
 Relevant knowledge entries:
 ${

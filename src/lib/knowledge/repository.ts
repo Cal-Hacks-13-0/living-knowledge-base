@@ -6,7 +6,7 @@ export async function getKnowledgeBaseOrThrow(id: string) {
     where: { id },
     include: { categories: true },
   });
-  if (!kb) throw new Error(`Knowledge base not found: ${id}`);
+  if (!kb) throw new Error(`Knowledge vault not found: ${id}`);
   return kb;
 }
 

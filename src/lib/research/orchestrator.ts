@@ -26,7 +26,7 @@ const MAX_DOCUMENTS_PROCESSED_PER_RUN = 8;
 
 export class OverlappingRunError extends Error {
   constructor(knowledgeBaseId: string) {
-    super(`A research run is already in progress for knowledge base ${knowledgeBaseId}`);
+    super(`A research run is already in progress for knowledge vault ${knowledgeBaseId}`);
     this.name = "OverlappingRunError";
   }
 }

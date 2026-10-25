@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 export interface EntryCardData {
   id: string;
@@ -15,9 +15,14 @@ export interface EntryCardData {
   insightEvidence: Array<{ insight: { id: string; title: string } | null }>;
 }
 
-export function EntryCard({ entry }: { entry: EntryCardData }) {
+export function EntryCard({ entry, highlighted = false }: { entry: EntryCardData; highlighted?: boolean }) {
   return (
-    <Card>
+    // `entry-<id>` is the deep-link target used by global search results (/kb/:id/library#entry-<id>).
+    <Card
+      id={`entry-${entry.id}`}
+      tabIndex={-1}
+      className={cn("scroll-mt-6 outline-none transition-shadow", highlighted && "border-accent/50 ring-2 ring-accent/30")}
+    >
       <CardHeader className="flex-row items-start justify-between gap-2">
         <div>
           <div className="mb-1 flex items-center gap-2">
