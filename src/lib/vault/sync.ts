@@ -149,3 +149,17 @@ export async function syncKnowledgeBaseToVaultSafe(knowledgeBaseId: string): Pro
     console.error(`[vault] sync failed for ${knowledgeBaseId}:`, err);
   }
 }
+
+/**
+ * Removes a deleted knowledge vault's generated export folder (found by the id
+ * in its _Overview.md, so only that vault's own folder under the vault root is
+ * touched). Best-effort, like syncing: the database delete already succeeded.
+ */
+export async function removeKnowledgeBaseFromVaultSafe(knowledgeBaseId: string): Promise<void> {
+  try {
+    const dir = await findExistingKbDir(knowledgeBaseId);
+    if (dir) await fs.rm(dir, { recursive: true, force: true });
+  } catch (err) {
+    console.error(`[vault] failed to remove export for ${knowledgeBaseId}:`, err);
+  }
+}

@@ -9,7 +9,6 @@ import { apiPost, ApiError } from "@/lib/client/api";
 import { cn } from "@/lib/utils";
 import {
   ASSISTANT_LAYOUT_ID,
-  AI_ASSISTANT_PANEL_WIDTH,
   ASSISTANT_SPRING,
   ASSISTANT_CONTENT_VARIANTS,
   ASSISTANT_CONTENT_ITEM_VARIANTS,
@@ -22,32 +21,47 @@ interface Message {
   suggestedKnowledgeBase?: { goal: string } | null;
 }
 
-export { AI_ASSISTANT_PANEL_WIDTH };
-
 /**
  * A persistent, global side panel — always mounted (so chat history survives
  * close/reopen) but only renders its `motion.aside` while `open`, sharing
  * `ASSISTANT_LAYOUT_ID` with `AiAssistantTrigger` so Motion morphs the
  * trigger button directly into this panel (and back) instead of sliding a
  * separate surface in — see assistant-motion.ts. No backdrop, no dimming —
- * the main content column reserves AI_ASSISTANT_PANEL_WIDTH of right margin
- * while open. `currentKnowledgeBaseId` is a default hint for the assistant's
+ * the main content column reserves the panel's (user-resizable) width as right
+ * margin while open. `currentKnowledgeBaseId` is a default hint for the assistant's
  * tools, not a hard scope — it still operates across every knowledge base.
  */
 export function AiAssistantPanel({
   open,
   currentKnowledgeBaseId,
   onClose,
+  width,
+  resizing,
+  resizeHandle,
 }: {
   open: boolean;
   currentKnowledgeBaseId: string | null;
   onClose: () => void;
+  /** Panel width in px (drag its left edge to change it — see ShellWithAssistant). */
+  width: number;
+  /** True while the user is dragging the edge: follow the pointer instead of springing. */
+  resizing: boolean;
+  resizeHandle: React.ReactNode;
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Grow the input with its content (3 lines minimum, then scrolls past ~8 lines).
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + 2}px`;
+  }, [draft, width, open]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -84,9 +98,9 @@ export function AiAssistantPanel({
         <motion.aside
           layout
           layoutId={ASSISTANT_LAYOUT_ID}
-          transition={{ layout: ASSISTANT_SPRING }}
+          transition={{ layout: resizing ? { duration: 0 } : ASSISTANT_SPRING }}
           style={{
-            width: AI_ASSISTANT_PANEL_WIDTH,
+            width,
             borderTopLeftRadius: 20,
             borderBottomLeftRadius: 20,
             borderTopRightRadius: 0,
@@ -94,6 +108,7 @@ export function AiAssistantPanel({
           }}
           className="fixed right-0 top-0 z-20 flex h-dvh shrink-0 flex-col overflow-hidden border-l border-border bg-white shadow-lg"
         >
+          {resizeHandle}
           <motion.div
             variants={ASSISTANT_CONTENT_VARIANTS}
             initial="hidden"
@@ -189,6 +204,7 @@ export function AiAssistantPanel({
               className="flex items-end gap-2 border-t border-border p-3"
             >
               <textarea
+                ref={inputRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -197,9 +213,9 @@ export function AiAssistantPanel({
                     send();
                   }
                 }}
-                rows={1}
+                rows={3}
                 placeholder="Ask anything, share a link, or describe a new knowledge vault…"
-                className="max-h-32 min-h-9 flex-1 resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-accent/30"
+                className="max-h-48 min-h-[4.5rem] flex-1 resize-none overflow-y-auto rounded-lg border border-border bg-white px-3 py-2 text-sm leading-5 text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-accent/30"
               />
               <Button type="submit" size="icon" disabled={sending || !draft.trim()} aria-label="Send">
                 <Send className="h-4 w-4" />

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { SettingsForm } from "@/components/dashboard/settings-form";
 import { VaultSyncCard } from "@/components/dashboard/vault-sync-card";
+import { DeleteVaultCard } from "@/components/dashboard/delete-vault-card";
 import { PageEntrance } from "@/components/motion/page-entrance";
 import { AnimatedText } from "@/components/motion/animated-text";
 import { vaultRoot, kbFolderName } from "@/lib/vault/paths";
@@ -24,6 +25,9 @@ export default async function SettingsPage({ params }: { params: Promise<{ id: s
       </AnimatedText>
       <AnimatedText delay={0.3}>
         <VaultSyncCard knowledgeBaseId={id} vaultPath={vaultPath} />
+      </AnimatedText>
+      <AnimatedText delay={0.44}>
+        <DeleteVaultCard knowledgeBaseId={id} name={kb.name} />
       </AnimatedText>
     </PageEntrance>
   );

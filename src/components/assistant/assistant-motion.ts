@@ -9,8 +9,6 @@ import type { Transition, Variants } from "motion/react";
  */
 export const ASSISTANT_LAYOUT_ID = "ai-assistant-surface";
 
-export const AI_ASSISTANT_PANEL_WIDTH = "26rem";
-
 /** Critically-damped-ish spring — settles in ~500ms with minimal overshoot. */
 export const ASSISTANT_SPRING: Transition = {
   type: "spring",

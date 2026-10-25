@@ -24,9 +24,15 @@ const navActive = "border-accent bg-sidebar-active text-sidebar-foreground";
 export function Sidebar({
   knowledgeBases,
   inboxCount,
+  width,
+  children,
 }: {
   knowledgeBases: SidebarKnowledgeBase[];
   inboxCount: number;
+  /** Width in px (user-resizable; see ShellWithAssistant). */
+  width: number;
+  /** Extra controls rendered inside the sidebar, e.g. its resize handle. */
+  children?: React.ReactNode;
 }) {
   const pathname = usePathname();
 
@@ -38,7 +44,11 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
+    <aside
+      className="relative flex h-full shrink-0 flex-col bg-sidebar text-sidebar-foreground"
+      style={{ width }}
+    >
+      {children}
       <div className="flex items-center gap-2 px-4 py-4">
         <AxionLogo className="h-6 w-auto text-sidebar-foreground" />
         <span className="text-sm font-semibold">Axion</span>

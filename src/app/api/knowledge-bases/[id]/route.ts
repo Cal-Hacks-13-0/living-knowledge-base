@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ok, handleApiError, NotFoundError } from "@/lib/api/response";
 import { UpdateKnowledgeBaseRequestSchema } from "@/lib/validation/schemas";
 import { syncJobForKnowledgeBase, unscheduleKnowledgeBase } from "@/lib/jobs/scheduler";
-import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
+import { removeKnowledgeBaseFromVaultSafe, syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -51,6 +51,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await syncKnowledgeBaseToVaultSafe(id);
 
     return ok(updated);
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+/**
+ * Permanently deletes a knowledge vault. Its categories, sources and fetched
+ * documents, entries, insights, proposals, research runs, and Inbox events go
+ * with it (onDelete: Cascade); its schedule and Markdown export are removed too.
+ */
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const existing = await prisma.knowledgeBase.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) throw new NotFoundError(`Knowledge vault not found: ${id}`);
+
+    unscheduleKnowledgeBase(id);
+    await removeKnowledgeBaseFromVaultSafe(id); // needs the vault's files to still exist; before the DB delete is fine
+    await prisma.knowledgeBase.delete({ where: { id } });
+
+    return ok({ id });
   } catch (err) {
     return handleApiError(err);
   }
