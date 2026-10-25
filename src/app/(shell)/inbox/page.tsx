@@ -48,7 +48,7 @@ export default async function InboxPage() {
         <div className="flex flex-col gap-8">
           {proposals.map((p) => (
             <div key={p.id} className="flex flex-col gap-1.5">
-              <Link href={`/kb/${p.knowledgeBase.id}`} className="w-fit text-xs font-medium text-muted hover:text-accent">
+              <Link href={`/kb/${p.knowledgeBase.id}`} className="w-fit text-xs font-medium text-muted hover:text-accent-strong">
                 {p.knowledgeBase.name}
               </Link>
               <ProposalCard proposal={p} />
@@ -56,7 +56,7 @@ export default async function InboxPage() {
           ))}
           {insights.map((insight) => (
             <div key={insight.id} className="flex flex-col gap-1.5">
-              <Link href={`/kb/${insight.knowledgeBase.id}`} className="w-fit text-xs font-medium text-muted hover:text-accent">
+              <Link href={`/kb/${insight.knowledgeBase.id}`} className="w-fit text-xs font-medium text-muted hover:text-accent-strong">
                 {insight.knowledgeBase.name}
               </Link>
               <InsightCard insight={insight} />

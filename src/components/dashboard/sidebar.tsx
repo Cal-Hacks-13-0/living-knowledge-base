@@ -31,7 +31,7 @@ export function Sidebar({
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-white">
       <div className="flex items-center gap-2 px-4 py-4">
-        <BookOpen className="h-4 w-4 text-accent" />
+        <BookOpen className="h-4 w-4 text-accent-strong" />
         <span className="text-sm font-semibold text-foreground">Axion</span>
       </div>
 
@@ -44,7 +44,7 @@ export function Sidebar({
               href={href}
               className={cn(
                 "flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
-                active ? "bg-accent-soft text-accent" : "text-foreground hover:bg-surface"
+                active ? "bg-accent-soft text-accent-strong" : "text-foreground hover:bg-surface"
               )}
             >
               <span className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export function Sidebar({
             href="/knowledge"
             className={cn(
               "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors",
-              pathname === "/knowledge" ? "bg-accent-soft text-accent" : "text-foreground hover:bg-surface"
+              pathname === "/knowledge" ? "bg-accent-soft text-accent-strong" : "text-foreground hover:bg-surface"
             )}
           >
             <Library className="h-3.5 w-3.5 shrink-0 text-muted" />
@@ -86,7 +86,7 @@ export function Sidebar({
                 href={`/kb/${kb.id}`}
                 className={cn(
                   "truncate rounded-lg px-2.5 py-1.5 pl-8 text-sm transition-colors",
-                  active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface hover:text-foreground"
+                  active ? "bg-accent-soft text-accent-strong" : "text-muted hover:bg-surface hover:text-foreground"
                 )}
                 title={kb.name}
               >

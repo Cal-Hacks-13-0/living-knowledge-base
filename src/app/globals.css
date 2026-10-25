@@ -6,9 +6,16 @@
   --muted: #6b7280;
   --border: #e5e7eb;
   --surface: #fafafa;
-  --accent: #4f46e5;
-  --accent-foreground: #ffffff;
-  --accent-soft: #eef2ff;
+  --accent: #a6b9a3;
+  /* #A6B9A3 is light (sage green), so white text on it would fail contrast —
+     dark text keeps buttons/badges readable. */
+  --accent-foreground: #1c1c1e;
+  --accent-soft: #eef2ec;
+  /* #A6B9A3 is too light to read as *text* on white/accent-soft (~2:1
+     contrast — fails WCAG AA's 4.5:1), which is why selected sidebar items,
+     links, etc. looked washed out. Darker green from the same family, used
+     only where accent needs to be legible as text, not a fill. */
+  --accent-strong: #3b5949;
 }
 
 @theme inline {
@@ -20,6 +27,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-strong: var(--accent-strong);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

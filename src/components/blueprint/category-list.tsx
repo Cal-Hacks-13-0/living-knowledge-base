@@ -130,7 +130,7 @@ export function CategoryList({
             <button
               type="button"
               onClick={() => addSubtopic(index)}
-              className="flex items-center gap-1.5 self-start py-1 text-sm text-accent hover:underline"
+              className="flex items-center gap-1.5 self-start py-1 text-sm text-accent-strong hover:underline"
             >
               <Plus className="h-3.5 w-3.5" /> Add subtopic
             </button>

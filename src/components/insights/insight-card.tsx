@@ -94,7 +94,7 @@ export function InsightCard({ insight }: { insight: InsightCardData }) {
                       href={e.sourceDocument.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-accent hover:underline"
+                      className="inline-flex items-center gap-1 text-accent-strong hover:underline"
                     >
                       {e.sourceDocument.title} <ExternalLink className="h-3 w-3" />
                     </a>

@@ -197,7 +197,7 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
             <li data-float-card className="relative w-full max-w-xs">
               <FloatingCard index={0}>
                 <span className="flex flex-col items-center gap-3 rounded-xl border border-border bg-white px-6 py-7 text-center shadow-[0_14px_32px_-14px_rgba(15,23,42,0.35)]">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">
                     <BookOpen className="h-4 w-4" />
                   </span>
                   <span className="text-sm font-semibold text-foreground">No knowledge vaults yet</span>
@@ -338,7 +338,7 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
                   href={`/kb/${kb.id}`}
                   className="flex items-center gap-3 rounded-lg border border-border bg-white px-3 py-2.5 transition-colors hover:border-accent/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">
                     <BookOpen className="h-3.5 w-3.5" />
                   </span>
                   <span className="min-w-0">
@@ -385,7 +385,7 @@ function VaultCardFace({ kb, className }: { kb: LibraryKnowledgeBase; className?
       )}
     >
       <span className="flex min-w-0 items-center gap-2">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">
           <BookOpen className="h-3.5 w-3.5" />
         </span>
         <span className="truncate text-[10px] font-medium uppercase tracking-wide text-muted sm:text-[11px]">
