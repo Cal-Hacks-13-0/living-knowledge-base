@@ -2,10 +2,18 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Send, Loader2, Bot, User, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiPost, ApiError } from "@/lib/client/api";
 import { cn } from "@/lib/utils";
+import {
+  ASSISTANT_LAYOUT_ID,
+  AI_ASSISTANT_PANEL_WIDTH,
+  ASSISTANT_SPRING,
+  ASSISTANT_CONTENT_VARIANTS,
+  ASSISTANT_CONTENT_ITEM_VARIANTS,
+} from "./assistant-motion";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,19 +22,24 @@ interface Message {
   suggestedKnowledgeBase?: { goal: string } | null;
 }
 
-export const AI_ASSISTANT_PANEL_WIDTH = "26rem";
+export { AI_ASSISTANT_PANEL_WIDTH };
 
 /**
- * A persistent, global side panel (not an overlay/modal) — it coexists with
- * the main content, which is expected to reserve AI_ASSISTANT_PANEL_WIDTH of
- * right margin while this is open. No backdrop, no dimming. Works across
- * every knowledge base; `currentKnowledgeBaseId` is just a default hint for
- * the assistant's tools when the user doesn't name one explicitly.
+ * A persistent, global side panel — always mounted (so chat history survives
+ * close/reopen) but only renders its `motion.aside` while `open`, sharing
+ * `ASSISTANT_LAYOUT_ID` with `AiAssistantTrigger` so Motion morphs the
+ * trigger button directly into this panel (and back) instead of sliding a
+ * separate surface in — see assistant-motion.ts. No backdrop, no dimming —
+ * the main content column reserves AI_ASSISTANT_PANEL_WIDTH of right margin
+ * while open. `currentKnowledgeBaseId` is a default hint for the assistant's
+ * tools, not a hard scope — it still operates across every knowledge base.
  */
 export function AiAssistantPanel({
+  open,
   currentKnowledgeBaseId,
   onClose,
 }: {
+  open: boolean;
   currentKnowledgeBaseId: string | null;
   onClose: () => void;
 }) {
@@ -66,104 +79,135 @@ export function AiAssistantPanel({
   }
 
   return (
-    <aside
-      style={{ width: AI_ASSISTANT_PANEL_WIDTH }}
-      className="fixed right-0 top-0 z-20 flex h-dvh shrink-0 flex-col border-l border-border bg-white shadow-sm"
-    >
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="text-sm font-semibold text-foreground">AI Assistant</span>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close AI Assistant"
-          className="rounded-md p-1 text-muted hover:bg-surface hover:text-foreground"
+    <AnimatePresence>
+      {open && (
+        <motion.aside
+          layout
+          layoutId={ASSISTANT_LAYOUT_ID}
+          transition={{ layout: ASSISTANT_SPRING }}
+          style={{
+            width: AI_ASSISTANT_PANEL_WIDTH,
+            borderTopLeftRadius: 20,
+            borderBottomLeftRadius: 20,
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+          }}
+          className="fixed right-0 top-0 z-20 flex h-dvh shrink-0 flex-col overflow-hidden border-l border-border bg-white shadow-xl"
         >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+          <motion.div
+            variants={ASSISTANT_CONTENT_VARIANTS}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, transition: { duration: 0.12 } }}
+            className="flex h-full flex-col"
+          >
+            <motion.div
+              variants={ASSISTANT_CONTENT_ITEM_VARIANTS}
+              className="flex items-center justify-between border-b border-border px-4 py-3"
+            >
+              <span className="text-sm font-semibold text-foreground">AI Assistant</span>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close AI Assistant"
+                className="rounded-md p-1 text-muted hover:bg-surface hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-10 text-center">
-            <Sparkles className="h-5 w-5 text-accent" />
-            <p className="text-sm font-medium text-foreground">Ask anything, across all your knowledge vaults</p>
-            <p className="text-xs text-muted">
-              I can also archive a link you share, run research on demand, or help start a new knowledge vault.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {messages.map((m, i) => (
-              <div key={i} className={cn("flex items-start gap-2", m.role === "user" && "flex-row-reverse")}>
-                <span
-                  className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                    m.role === "user" ? "bg-accent text-accent-foreground" : "bg-accent-soft text-accent"
-                  )}
-                >
-                  {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
-                </span>
-                <div className="flex max-w-[80%] flex-col gap-2">
-                  <div
-                    className={cn(
-                      "whitespace-pre-wrap rounded-xl px-3 py-2 text-sm",
-                      m.role === "user" ? "bg-accent text-accent-foreground" : "bg-surface text-foreground",
-                      m.error && "border border-red-200 bg-red-50 text-red-700"
-                    )}
-                  >
-                    {m.content}
-                  </div>
-                  {m.suggestedKnowledgeBase && (
-                    <div className="rounded-xl border border-accent/30 bg-accent-soft p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-accent">New knowledge vault</p>
-                      <p className="mt-1 text-sm text-foreground">&ldquo;{m.suggestedKnowledgeBase.goal}&rdquo;</p>
-                      <Button
-                        size="sm"
-                        className="mt-2"
-                        onClick={() =>
-                          router.push(`/new?goal=${encodeURIComponent(m.suggestedKnowledgeBase!.goal)}`)
-                        }
+            <motion.div
+              variants={ASSISTANT_CONTENT_ITEM_VARIANTS}
+              ref={scrollRef}
+              className="flex-1 overflow-y-auto px-4 py-4"
+            >
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-10 text-center">
+                  <Sparkles className="h-5 w-5 text-accent-strong" />
+                  <p className="text-sm font-medium text-foreground">Ask anything, across all your knowledge vaults</p>
+                  <p className="text-xs text-muted">
+                    I can also archive a link you share, run research on demand, or help start a new knowledge vault.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {messages.map((m, i) => (
+                    <div key={i} className={cn("flex items-start gap-2", m.role === "user" && "flex-row-reverse")}>
+                      <span
+                        className={cn(
+                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                          m.role === "user" ? "bg-accent text-accent-foreground" : "bg-accent-soft text-accent-strong"
+                        )}
                       >
-                        Create this knowledge vault <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
+                        {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                      </span>
+                      <div className="flex max-w-[80%] flex-col gap-2">
+                        <div
+                          className={cn(
+                            "whitespace-pre-wrap rounded-xl px-3 py-2 text-sm",
+                            m.role === "user" ? "bg-accent text-accent-foreground" : "bg-surface text-foreground",
+                            m.error && "border border-red-200 bg-red-50 text-red-700"
+                          )}
+                        >
+                          {m.content}
+                        </div>
+                        {m.suggestedKnowledgeBase && (
+                          <div className="rounded-xl border border-accent/30 bg-accent-soft p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-accent-strong">
+                              New knowledge vault
+                            </p>
+                            <p className="mt-1 text-sm text-foreground">&ldquo;{m.suggestedKnowledgeBase.goal}&rdquo;</p>
+                            <Button
+                              size="sm"
+                              className="mt-2"
+                              onClick={() =>
+                                router.push(`/new?goal=${encodeURIComponent(m.suggestedKnowledgeBase!.goal)}`)
+                              }
+                            >
+                              Create this knowledge vault <ArrowRight className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {sending && (
+                    <div className="flex items-center gap-2 text-xs text-muted">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
-            {sending && (
-              <div className="flex items-center gap-2 text-xs text-muted">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+              )}
+            </motion.div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send();
-        }}
-        className="flex items-end gap-2 border-t border-border p-3"
-      >
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          rows={1}
-          placeholder="Ask anything, share a link, or describe a new knowledge vault…"
-          className="max-h-32 min-h-9 flex-1 resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-accent/30"
-        />
-        <Button type="submit" size="icon" disabled={sending || !draft.trim()} aria-label="Send">
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
-    </aside>
+            <motion.form
+              variants={ASSISTANT_CONTENT_ITEM_VARIANTS}
+              onSubmit={(e) => {
+                e.preventDefault();
+                send();
+              }}
+              className="flex items-end gap-2 border-t border-border p-3"
+            >
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
+                rows={1}
+                placeholder="Ask anything, share a link, or describe a new knowledge vault…"
+                className="max-h-32 min-h-9 flex-1 resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-accent/30"
+              />
+              <Button type="submit" size="icon" disabled={sending || !draft.trim()} aria-label="Send">
+                <Send className="h-4 w-4" />
+              </Button>
+            </motion.form>
+          </motion.div>
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 }
