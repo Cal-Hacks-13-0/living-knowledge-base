@@ -12,7 +12,8 @@ import { NetworkSphere } from "@/components/home/network-sphere";
  *   user's Cursor trail preference is On) + a smoked-glass veil.
  * - "stars": near-black with only small stars, which turn with the cursor
  *   like the landing page's star dome (no network) — used by the new-vault
- *   creation flow; no fluid regardless of the saved preference.
+ *   creation flow; no fluid regardless of the saved preference. `motion`
+ *   false freezes the stars where they are (the flow's "3D motion" toggle).
  *
  * Render as the first child of a `relative` region element, before the
  * content (which should sit at z-10 or above). Pair with the `.ambient`
@@ -24,14 +25,16 @@ export type AmbientMode = "fluid" | "stars";
 export function AmbientBackdrop({
   mode,
   regionRef,
+  motion,
 }: {
   mode: AmbientMode;
   regionRef: React.RefObject<HTMLElement | null>;
+  motion?: boolean;
 }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <div className={mode === "fluid" ? "ambient-charcoal absolute inset-0" : "ambient-night absolute inset-0"} />
-      {mode === "fluid" ? <StarField density={2.4} /> : <NetworkSphere showGraph={false} fillParent starBoost={1.45} />}
+      {mode === "fluid" ? <StarField density={2.4} /> : <NetworkSphere showGraph={false} fillParent starBoost={1.45} motion={motion} />}
       {mode === "fluid" && <FluidCursor regionRef={regionRef} />}
       {/* Smoked glass: a faint dark tint over the light — a background layer, never over text. */}
       {mode === "fluid" && <div className="absolute inset-0 bg-[rgba(20,21,26,0.22)]" />}
