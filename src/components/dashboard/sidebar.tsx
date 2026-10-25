@@ -17,9 +17,9 @@ export interface SidebarKnowledgeBase {
 // indicator on its leading edge — never a full accent fill (see redesign
 // brief §3: "Do not make the entire selected item orange").
 const navItem =
-  "rounded-lg border-l-2 border-transparent px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-icon";
+  "rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-icon";
 const navIdle = "text-sidebar-foreground hover:bg-sidebar-hover";
-const navActive = "border-accent bg-sidebar-active text-sidebar-foreground";
+const navActive = "bg-sidebar-active text-sidebar-foreground";
 
 export function Sidebar({
   knowledgeBases,
@@ -45,7 +45,7 @@ export function Sidebar({
 
   return (
     <aside
-      className="relative flex h-full shrink-0 flex-col bg-sidebar text-sidebar-foreground"
+      className="chrome-glass relative z-10 flex h-full shrink-0 flex-col text-sidebar-foreground"
       style={{ width }}
     >
       {children}
@@ -125,7 +125,7 @@ export function Sidebar({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-sidebar-hover px-4 py-3">
+      <div className="flex items-center justify-between gap-2 px-4 py-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <span
             aria-hidden

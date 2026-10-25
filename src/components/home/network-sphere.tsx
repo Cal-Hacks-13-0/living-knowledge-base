@@ -228,8 +228,11 @@ interface Stars {
   style: string[];
 }
 
-/** A fixed, seeded star dome: mostly tiny dim points, a few slightly brighter ones. */
-function buildStars(): Stars {
+/**
+ * A fixed, seeded star dome: mostly tiny dim points, a few slightly brighter
+ * ones. `boost` > 1 makes every star a little brighter and larger.
+ */
+function buildStars(boost: number): Stars {
   const rand = mulberry32(0x57a2);
   const dir = new Float32Array(STAR_COUNT * 3);
   const size = new Float32Array(STAR_COUNT);
@@ -243,17 +246,26 @@ function buildStars(): Stars {
     dir[i * 3 + 2] = r * Math.sin(t);
     const bright = rand() < 0.06;
     // Visible but clearly background: dimmer and much smaller than the graph's nodes.
-    size[i] = bright ? 1 + rand() * 0.5 : 0.45 + rand() * 0.5;
-    const alpha = bright ? 0.5 + rand() * 0.2 : 0.16 + rand() * 0.29;
+    size[i] = (bright ? 1 + rand() * 0.5 : 0.45 + rand() * 0.5) * (1 + (boost - 1) * 0.5);
+    const alpha = Math.min(0.95, (bright ? 0.5 + rand() * 0.2 : 0.16 + rand() * 0.29) * boost);
     const shade = Math.round(200 + rand() * 55);
     style.push(`rgba(${shade},${shade},${shade},${alpha.toFixed(3)})`);
   }
   return { dir, size, style };
 }
 
-let cachedStars: Stars | null = null;
+const starDomes = new Map<number, Stars>();
 
-export function NetworkSphere() {
+/**
+ * `showGraph: false` draws only the rotating star dome (used behind the
+ * new-vault flow). `fillParent` sizes it to its positioned parent instead of
+ * the viewport. `starBoost` brightens the stars a little.
+ */
+export function NetworkSphere({
+  showGraph = true,
+  fillParent = false,
+  starBoost = 1,
+}: { showGraph?: boolean; fillParent?: boolean; starBoost?: number } = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -285,8 +297,9 @@ export function NetworkSphere() {
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-      width = window.innerWidth;
-      height = window.innerHeight;
+      const area = fillParent ? canvas.parentElement?.getBoundingClientRect() : null;
+      width = area ? area.width : window.innerWidth;
+      height = area ? area.height : window.innerHeight;
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       canvas.style.width = `${width}px`;
@@ -305,7 +318,7 @@ export function NetworkSphere() {
       const sinP = Math.sin(pitch);
       const camera = 3.2; // distance in sphere radii: gentle perspective
       const p = graph.points;
-      for (let i = 0; i < n; i++) {
+      for (let i = 0; i < (showGraph ? n : 0); i++) {
         const x0 = p[i * 3];
         const y0 = p[i * 3 + 1];
         const z0 = p[i * 3 + 2];
@@ -330,7 +343,8 @@ export function NetworkSphere() {
 
       // Stars: the far side of a sky dome, turned by the same rotation as the
       // graph, so the whole universe moves together. Seen from the centre.
-      const stars = (cachedStars ??= buildStars());
+      let stars = starDomes.get(starBoost);
+      if (!stars) starDomes.set(starBoost, (stars = buildStars(starBoost)));
       const focal = Math.max(width, height) * 0.5;
       const sd = stars.dir;
       for (let i = 0; i < STAR_COUNT; i++) {
@@ -350,6 +364,8 @@ export function NetworkSphere() {
         ctx.arc(px, py, stars.size[i], 0, Math.PI * 2);
         ctx.fill();
       }
+
+      if (!showGraph) return;
 
       // Edges, batched into quantised opacity levels: depth brightness × rim fade.
       ctx.lineWidth = 0.9;
@@ -422,6 +438,8 @@ export function NetworkSphere() {
       draw();
     };
     window.addEventListener("resize", onResize);
+    const parentObserver = fillParent && canvas.parentElement ? new ResizeObserver(onResize) : null;
+    if (parentObserver && canvas.parentElement) parentObserver.observe(canvas.parentElement);
     if (!reduceMotion) window.addEventListener("pointermove", onPointerMove, { passive: true });
 
     return () => {
@@ -429,8 +447,15 @@ export function NetworkSphere() {
       raf = 0;
       window.removeEventListener("resize", onResize);
       window.removeEventListener("pointermove", onPointerMove);
+      parentObserver?.disconnect();
     };
-  }, []);
+  }, [showGraph, fillParent, starBoost]);
 
-  return <canvas ref={canvasRef} aria-hidden className="pointer-events-none fixed inset-0 -z-20" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden
+      className={fillParent ? "pointer-events-none absolute inset-0" : "pointer-events-none fixed inset-0 -z-20"}
+    />
+  );
 }

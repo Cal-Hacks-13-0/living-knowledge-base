@@ -9,7 +9,7 @@ const STEPS = [
 
 export function HowItWorksPanel() {
   return (
-    <aside className="hidden w-72 shrink-0 flex-col gap-4 border-l border-border bg-surface px-6 py-10 lg:flex">
+    <aside className="chrome-glass-clear relative z-10 hidden w-72 shrink-0 flex-col gap-4 px-6 py-10 lg:flex">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">How this works</p>
       <ol className="flex flex-col gap-4">
         {STEPS.map(({ icon: Icon, text }) => (

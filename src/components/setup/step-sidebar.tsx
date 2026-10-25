@@ -10,7 +10,7 @@ export interface WizardStep {
 
 export function StepSidebar({ steps, currentIndex }: { steps: WizardStep[]; currentIndex: number }) {
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-white px-4 py-5">
+    <aside className="chrome-glass-clear relative z-10 flex h-full w-64 shrink-0 flex-col px-4 py-5">
       <Link href="/" className="mb-8 flex items-center gap-2 text-sm font-semibold text-foreground">
         <AxionLogo className="h-6 w-auto text-foreground" />
         Axion
