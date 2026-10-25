@@ -13,6 +13,8 @@ import { useEffect, useRef } from "react";
  */
 
 const HUB_COUNT = 20;
+// Leaf nodes spread over the outer surface so the silhouette reads as round.
+const OUTER_COUNT = 44;
 const MAX_YAW = (75 * Math.PI) / 180;
 const MAX_PITCH = (37 * Math.PI) / 180;
 const REST_YAW = 0.35;
@@ -25,7 +27,18 @@ const MAX_DPR = 2;
 
 // Brightness by depth bucket (far → near), precomputed so frames allocate no strings.
 const bucketMid = (b: number) => (b + 0.5) / EDGE_BUCKETS;
-const EDGE_STYLE = Array.from({ length: EDGE_BUCKETS }, (_, b) => `rgba(255,255,255,${(0.04 + bucketMid(b) ** 2 * 0.3).toFixed(3)})`);
+// Edge opacity before the rim fade: by depth, far → near.
+const edgeAlpha = (depth: number) => 0.04 + depth * depth * 0.3;
+// Edges are drawn in a few quantised opacity levels (depth × rim fade), styles precomputed.
+const EDGE_LEVELS = 16;
+const EDGE_MAX_ALPHA = 0.34;
+const EDGE_LEVEL_STYLE = Array.from(
+  { length: EDGE_LEVELS },
+  (_, l) => `rgba(255,255,255,${((l / (EDGE_LEVELS - 1)) * EDGE_MAX_ALPHA).toFixed(3)})`
+);
+// Where the soft rim fade starts/ends, as a fraction of the cluster radius from its centre.
+const FADE_START = 0.7;
+const FADE_END = 1.1;
 const NODE_STYLE = Array.from({ length: EDGE_BUCKETS }, (_, b) => {
   const d = bucketMid(b);
   const shade = Math.round(170 + d * 70);
@@ -157,6 +170,21 @@ function buildGraph(): Graph {
     }
   }
 
+  // Outline: leaves spread evenly near the surface (jittered Fibonacci sphere), each
+  // linked only to its nearest existing node — a round silhouette, not a closed ring.
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const inner = hubFlags.length;
+  for (let i = 0; i < OUTER_COUNT; i++) {
+    const y = 1 - ((i + 0.5) / OUTER_COUNT) * 2;
+    const ring = Math.sqrt(1 - y * y);
+    const theta = golden * i + (rand() - 0.5) * 0.5;
+    const r = 0.9 + rand() * 0.1;
+    const node = addNode(Math.cos(theta) * ring * r, (y + (rand() - 0.5) * 0.08) * r, Math.sin(theta) * ring * r, false);
+    let best = 0;
+    for (let j = 1; j < inner; j++) if (dist(node, j) < dist(node, best)) best = j;
+    link(node, best);
+  }
+
   // Centre on the centroid and scale so the outermost node sits at radius 1.
   const n = hubFlags.length;
   let cx = 0, cy = 0, cz = 0;
@@ -214,8 +242,9 @@ function buildStars(): Stars {
     dir[i * 3 + 1] = u;
     dir[i * 3 + 2] = r * Math.sin(t);
     const bright = rand() < 0.06;
-    size[i] = bright ? 0.9 + rand() * 0.5 : 0.35 + rand() * 0.5;
-    const alpha = bright ? 0.4 + rand() * 0.2 : 0.1 + rand() * 0.25;
+    // Visible but clearly background: dimmer and much smaller than the graph's nodes.
+    size[i] = bright ? 1 + rand() * 0.5 : 0.45 + rand() * 0.5;
+    const alpha = bright ? 0.5 + rand() * 0.2 : 0.16 + rand() * 0.29;
     const shade = Math.round(200 + rand() * 55);
     style.push(`rgba(${shade},${shade},${shade},${alpha.toFixed(3)})`);
   }
@@ -239,6 +268,7 @@ export function NetworkSphere() {
     const sy = new Float32Array(n);
     const depth = new Float32Array(n); // 0 (far) … 1 (near)
     const scale = new Float32Array(n);
+    const fade = new Float32Array(n); // 1 inside … 0 at the soft outer rim
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let width = 0;
@@ -268,7 +298,7 @@ export function NetworkSphere() {
 
     const draw = () => {
       // A large round cluster around the folder, with dark space left around the heading.
-      const radius = Math.min(Math.max(Math.min(width, height) * 0.46, 180), 470);
+      const radius = Math.min(Math.max(Math.min(width, height) * 0.52, 190), 540);
       const cosY = Math.cos(yaw);
       const sinY = Math.sin(yaw);
       const cosP = Math.cos(pitch);
@@ -287,6 +317,10 @@ export function NetworkSphere() {
         const s = camera / (camera - z2);
         sx[i] = cx + x1 * radius * s;
         sy[i] = cy + y2 * radius * s;
+        // Soft rim: fade out with on-screen distance from the cluster's centre.
+        const dist = Math.hypot(sx[i] - cx, sy[i] - cy) / radius;
+        const t = Math.min(Math.max((dist - FADE_START) / (FADE_END - FADE_START), 0), 1);
+        fade[i] = 1 - t * t * (3 - 2 * t); // smoothstep
         depth[i] = (z2 + 1) / 2;
         scale[i] = s;
       }
@@ -317,20 +351,23 @@ export function NetworkSphere() {
         ctx.fill();
       }
 
-      // Edges, batched into a few brightness buckets by average depth.
+      // Edges, batched into quantised opacity levels: depth brightness × rim fade.
       ctx.lineWidth = 0.9;
       const e = graph.edges;
-      for (let b = 0; b < EDGE_BUCKETS; b++) {
-        const lo = b / EDGE_BUCKETS;
-        const hi = (b + 1) / EDGE_BUCKETS;
+      for (let level = 1; level < EDGE_LEVELS; level++) {
         ctx.beginPath();
+        let any = false;
         for (let k = 0; k < e.length; k += 2) {
-          const d = (depth[e[k]] + depth[e[k + 1]]) / 2;
-          if (d < lo || d >= hi) continue;
-          ctx.moveTo(sx[e[k]], sy[e[k]]);
-          ctx.lineTo(sx[e[k + 1]], sy[e[k + 1]]);
+          const a = e[k];
+          const b = e[k + 1];
+          const alpha = edgeAlpha((depth[a] + depth[b]) / 2) * Math.min(fade[a], fade[b]);
+          if (Math.round((alpha / EDGE_MAX_ALPHA) * (EDGE_LEVELS - 1)) !== level) continue;
+          ctx.moveTo(sx[a], sy[a]);
+          ctx.lineTo(sx[b], sy[b]);
+          any = true;
         }
-        ctx.strokeStyle = EDGE_STYLE[b];
+        if (!any) continue;
+        ctx.strokeStyle = EDGE_LEVEL_STYLE[level];
         ctx.stroke();
       }
 
@@ -340,13 +377,15 @@ export function NetworkSphere() {
         const hi = (b + 1) / EDGE_BUCKETS;
         for (let i = 0; i < n; i++) {
           const d = depth[i];
-          if (d < lo || d >= hi) continue;
+          if (d < lo || d >= hi || fade[i] < 0.02) continue;
+          ctx.globalAlpha = fade[i];
           ctx.fillStyle = graph.hub[i] ? HUB_STYLE[b] : NODE_STYLE[b];
           ctx.beginPath();
           ctx.arc(sx[i], sy[i], graph.sizes[i] * scale[i] * (0.7 + d * 0.45), 0, Math.PI * 2);
           ctx.fill();
         }
       }
+      ctx.globalAlpha = 1;
     };
 
     const step = (now: number) => {
