@@ -66,6 +66,15 @@ export async function safeFetch(
         redirect: "manual",
         signal: controller.signal,
       });
+    } catch (err) {
+      // Name the actual failure (timeout vs. the network-level cause) instead
+      // of fetch's bare "fetch failed" — lib/research/source-errors.ts turns
+      // these into plain-language explanations.
+      if (controller.signal.aborted) {
+        throw new UpstreamError(`${url.hostname} did not respond within ${FETCH_TIMEOUT_MS / 1000}s (timed out)`);
+      }
+      const cause = (err as { cause?: { code?: string } })?.cause?.code;
+      throw new UpstreamError(`Couldn't connect to ${url.hostname}${cause ? ` (${cause})` : ""}: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       clearTimeout(timeout);
     }

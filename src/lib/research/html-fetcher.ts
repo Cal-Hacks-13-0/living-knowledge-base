@@ -54,9 +54,12 @@ export async function fetchHtmlSource(
   const text = htmlToText(res.text).slice(0, 20000);
   const title = extractTitle(res.text);
 
-  const documents: NormalizedDocument[] = text
-    ? [buildNormalizedDocument({ externalId: null, url, title, content: text, publishedAt: null })]
-    : [];
+  // The page loaded but nothing readable came out of it (e.g. a script-built
+  // page) — report that rather than looking like a healthy, empty source.
+  if (!text) throw new Error(`${new URL(res.finalUrl).hostname} loaded, but the page had no readable text`);
+  const documents: NormalizedDocument[] = [
+    buildNormalizedDocument({ externalId: null, url, title, content: text, publishedAt: null }),
+  ];
 
   return {
     documents,

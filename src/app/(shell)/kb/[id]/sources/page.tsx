@@ -1,20 +1,26 @@
 import { prisma } from "@/lib/db/prisma";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddSourceForm } from "@/components/sources/add-source-form";
+import { SourceCard, type ProcessingIssue } from "@/components/sources/source-card";
 import { PageEntrance } from "@/components/motion/page-entrance";
 import { AnimatedText } from "@/components/motion/animated-text";
-import { formatDateTime, timeAgo } from "@/lib/utils";
 import { Radio } from "lucide-react";
 
 export default async function SourcesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const sources = await prisma.source.findMany({
-    where: { knowledgeBaseId: id },
-    orderBy: { createdAt: "asc" },
-    include: { _count: { select: { documents: true } } },
-  });
+  const [sources, lastRun] = await Promise.all([
+    prisma.source.findMany({
+      where: { knowledgeBaseId: id },
+      orderBy: { createdAt: "asc" },
+      include: { _count: { select: { documents: true } } },
+    }),
+    prisma.researchRun.findFirst({
+      where: { knowledgeBaseId: id, completedAt: { not: null } },
+      orderBy: { startedAt: "desc" },
+      select: { errorMessage: true },
+    }),
+  ]);
+  const processingIssues = await processingIssuesBySource(id, lastRun?.errorMessage ?? null);
 
   return (
     <PageEntrance className="flex flex-col gap-5">
@@ -23,29 +29,22 @@ export default async function SourcesPage({ params }: { params: Promise<{ id: st
       ) : (
         <AnimatedText delay={0.16} className="flex flex-col gap-3">
           {sources.map((source) => (
-            <Card key={source.id}>
-              <CardContent className="flex items-center justify-between gap-3 py-4">
-                <div>
-                  <div className="mb-1 flex items-center gap-2">
-                    <p className="text-sm font-medium text-foreground">{source.name}</p>
-                    <Badge variant="neutral">{source.type.replace("_", " ")}</Badge>
-                    <Badge variant={source.status === "ERROR" ? "danger" : source.status === "ACTIVE" ? "success" : "neutral"}>
-                      {source.status}
-                    </Badge>
-                  </div>
-                  <p className="break-all text-xs text-muted">{source.url}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    {source._count.documents} document(s) stored · last checked{" "}
-                    {source.lastCheckedAt ? timeAgo(source.lastCheckedAt) : "never"}
-                    {source.lastSuccessfulFetchAt &&
-                      ` · last success ${formatDateTime(source.lastSuccessfulFetchAt)}`}
-                  </p>
-                  {source.status === "ERROR" && source.lastError && (
-                    <p className="mt-1 whitespace-pre-wrap break-all text-xs text-red-700">{source.lastError}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <SourceCard
+              key={source.id}
+              knowledgeBaseId={id}
+              processingIssue={processingIssues.get(source.id) ?? null}
+              source={{
+                id: source.id,
+                name: source.name,
+                url: source.url,
+                type: source.type,
+                status: source.status,
+                lastError: source.lastError,
+                lastCheckedAt: source.lastCheckedAt,
+                lastSuccessfulFetchAt: source.lastSuccessfulFetchAt,
+                documentCount: source._count.documents,
+              }}
+            />
           ))}
         </AnimatedText>
       )}
@@ -55,4 +54,28 @@ export default async function SourcesPage({ params }: { params: Promise<{ id: st
       </AnimatedText>
     </PageEntrance>
   );
+}
+
+/**
+ * The last research run records per-document processing failures in its
+ * notes as `AI processing failed for "<document title>": <reason>` (see
+ * lib/research/orchestrator.ts). Map those documents back to their source so
+ * the card can say the source works but some items couldn't be processed.
+ */
+async function processingIssuesBySource(knowledgeBaseId: string, runNotes: string | null) {
+  const issues = new Map<string, ProcessingIssue>();
+  if (!runNotes) return issues;
+  const failures = [...runNotes.matchAll(/AI processing failed for "(.+?)": ([\s\S]*?)(?= \| |$)/g)].map((m) => ({ title: m[1], detail: m[2] }));
+  if (failures.length === 0) return issues;
+  const docs = await prisma.sourceDocument.findMany({
+    where: { title: { in: failures.map((f) => f.title) }, source: { knowledgeBaseId } },
+    select: { title: true, sourceId: true },
+  });
+  for (const f of failures) {
+    const doc = docs.find((d) => d.title === f.title);
+    if (!doc) continue;
+    const prev = issues.get(doc.sourceId);
+    issues.set(doc.sourceId, { count: (prev?.count ?? 0) + 1, detail: prev?.detail ?? `AI processing failed: ${f.detail}` });
+  }
+  return issues;
 }

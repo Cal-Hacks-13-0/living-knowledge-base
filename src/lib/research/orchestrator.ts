@@ -26,7 +26,7 @@ export class OverlappingRunError extends Error {
   }
 }
 
-async function fetchFromSource(source: Source) {
+export async function fetchFromSource(source: Source) {
   const conditional = { etag: source.etag, lastModified: source.lastModified };
   switch (source.type) {
     case "RSS":
@@ -144,6 +144,9 @@ export async function runResearch(
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
+        // Full diagnostics stay in the server log; the UI explains `message`
+        // in plain language (lib/research/source-errors.ts).
+        console.warn(`[research] source ${source.id} (${source.url}) failed:`, err);
         runNotes.push(`${source.name}: ${message}`);
         sourcesFailedCount += 1;
         await prisma.source.update({
