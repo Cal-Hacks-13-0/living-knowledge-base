@@ -20,8 +20,21 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
     await Promise.all([
       prisma.source.count({ where: { knowledgeBaseId: id } }),
       prisma.knowledgeEntry.count({ where: { knowledgeBaseId: id } }),
+      // "Successful" means it actually accomplished something, not just that
+      // nothing crashed: a clean COMPLETED run counts even if it found
+      // nothing new (that's a legitimate "checked, no changes" outcome), but
+      // a PARTIAL run only counts if it still processed a document or
+      // generated an insight despite some source failing — a partial run
+      // that fetched things but processed/generated nothing was not a
+      // success, even though its status isn't FAILED.
       prisma.researchRun.findFirst({
-        where: { knowledgeBaseId: id, status: { in: ["COMPLETED", "PARTIAL"] } },
+        where: {
+          knowledgeBaseId: id,
+          OR: [
+            { status: "COMPLETED" },
+            { AND: [{ status: "PARTIAL" }, { OR: [{ documentsProcessed: { gt: 0 } }, { insightsGenerated: { gt: 0 } }] }] },
+          ],
+        },
         orderBy: { startedAt: "desc" },
       }),
       prisma.insight.findMany({ where: { knowledgeBaseId: id }, orderBy: { createdAt: "desc" }, take: 4 }),

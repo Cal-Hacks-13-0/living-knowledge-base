@@ -73,4 +73,48 @@ describe("fetchRssSource", () => {
     vi.mocked(safeFetch).mockRejectedValue(new Error("network unreachable"));
     await expect(fetchRssSource("https://example.com/feed.xml")).rejects.toThrow("network unreachable");
   });
+
+  it("discovers and follows a page's <link rel=alternate> feed when the configured URL is the page, not the feed", async () => {
+    const PAGE_HTML = `<!doctype html><html><head>
+      <link rel="stylesheet" href="/styles.css">
+      <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss/weblog/">
+    </head><body>Blog index, not a feed.</body></html>`;
+
+    vi.mocked(safeFetch)
+      .mockResolvedValueOnce({
+        status: 200,
+        finalUrl: "https://example.com/weblog/",
+        headers: new Headers(),
+        text: PAGE_HTML,
+        notModified: false,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        finalUrl: "https://example.com/rss/weblog/",
+        headers: new Headers({ etag: '"feed-etag"' }),
+        text: SAMPLE_FEED,
+        notModified: false,
+      });
+
+    const result = await fetchRssSource("https://example.com/weblog/");
+
+    expect(result.documents).toHaveLength(2);
+    expect(result.discoveredUrl).toBe("https://example.com/rss/weblog/");
+    expect(result.etag).toBe('"feed-etag"'); // from the discovered feed response, not the page
+    expect(safeFetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(safeFetch).mock.calls[1][0]).toBe("https://example.com/rss/weblog/");
+  });
+
+  it("gives an actionable error when the URL isn't a feed and no feed link is discoverable", async () => {
+    vi.mocked(safeFetch).mockResolvedValue({
+      status: 200,
+      finalUrl: "https://example.com/blog/",
+      headers: new Headers(),
+      text: "<!doctype html><html><head><title>Blog</title></head><body>No feed link here.</body></html>",
+      notModified: false,
+    });
+
+    await expect(fetchRssSource("https://example.com/blog/")).rejects.toThrow(/none was discoverable/i);
+    expect(safeFetch).toHaveBeenCalledTimes(1); // no wasted second request
+  });
 });

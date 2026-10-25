@@ -149,7 +149,10 @@ export const InsightCandidateSchema = z.object({
 });
 
 export const InsightResponseSchema = z.object({
-  insights: z.array(InsightCandidateSchema).max(3),
+  // generateInsights() only invokes the model when at least one meaningful,
+  // non-duplicate finding exists. In that case the run must surface a useful
+  // result instead of silently returning zero insights.
+  insights: z.array(InsightCandidateSchema).min(1).max(3),
 });
 export type InsightCandidate = z.infer<typeof InsightCandidateSchema>;
 export type InsightResponse = z.infer<typeof InsightResponseSchema>;

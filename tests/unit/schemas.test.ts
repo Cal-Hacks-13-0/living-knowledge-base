@@ -96,8 +96,8 @@ describe("ComparisonResponseSchema", () => {
 });
 
 describe("InsightResponseSchema", () => {
-  it("allows zero insights", () => {
-    expect(InsightResponseSchema.safeParse({ insights: [] }).success).toBe(true);
+  it("requires at least one insight when insight generation is invoked", () => {
+    expect(InsightResponseSchema.safeParse({ insights: [] }).success).toBe(false);
   });
 
   it("rejects more than 3 insights", () => {

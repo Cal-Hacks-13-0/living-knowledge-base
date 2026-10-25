@@ -109,17 +109,39 @@ export async function runResearch(
           }
         }
 
-        await prisma.source.update({
-          where: { id: source.id },
-          data: {
-            lastCheckedAt: new Date(),
-            lastSuccessfulFetchAt: new Date(),
-            lastError: null,
-            etag: result.etag ?? source.etag,
-            lastModified: result.lastModified ?? source.lastModified,
-            status: "ACTIVE",
-          },
-        });
+        try {
+          await prisma.source.update({
+            where: { id: source.id },
+            data: {
+              lastCheckedAt: new Date(),
+              lastSuccessfulFetchAt: new Date(),
+              lastError: null,
+              etag: result.etag ?? source.etag,
+              lastModified: result.lastModified ?? source.lastModified,
+              status: "ACTIVE",
+              // Self-heal a source configured with a page URL instead of its
+              // feed (see rss-fetcher.ts discoverFeedUrl) — once found, point
+              // straight at the real feed from now on.
+              ...("discoveredUrl" in result && result.discoveredUrl ? { url: result.discoveredUrl } : {}),
+            },
+          });
+        } catch (err: unknown) {
+          // Another source in this vault already has that exact URL — rare,
+          // and not worth failing the run over; keep the original URL and
+          // just rediscover the feed again next time.
+          if (!isUniqueConstraintError(err)) throw err;
+          await prisma.source.update({
+            where: { id: source.id },
+            data: {
+              lastCheckedAt: new Date(),
+              lastSuccessfulFetchAt: new Date(),
+              lastError: null,
+              etag: result.etag ?? source.etag,
+              lastModified: result.lastModified ?? source.lastModified,
+              status: "ACTIVE",
+            },
+          });
+        }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         runNotes.push(`${source.name}: ${message}`);
@@ -181,7 +203,15 @@ export async function runResearch(
         }
       }
 
-      if (findings.length > 0) {
+      // A newly fetched document can still be semantically identical to an
+      // existing entry. Do not force a noisy insight for those, but whenever
+      // at least one relevant non-duplicate finding remains, the Insight Agent
+      // is required to surface 1-3 evidence-backed insights — even if some
+      // sources failed and the overall run will be PARTIAL.
+      const insightFindings = findings.filter(
+        (finding) => finding.comparison.classification !== "DUPLICATE"
+      );
+      if (insightFindings.length > 0) {
         try {
           const existingEntries = await prisma.knowledgeEntry.findMany({
             where: { knowledgeBaseId },
@@ -192,7 +222,7 @@ export async function runResearch(
           const insightResult = await generateInsights({
             userGoal: kb.userGoal,
             preferences,
-            findings,
+            findings: insightFindings,
             existingEntries,
           });
 

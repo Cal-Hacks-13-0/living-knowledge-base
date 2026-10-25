@@ -7,10 +7,10 @@ found during one research run, decide which findings are actually worth surfacin
 user as insights.
 
 Rank candidates by: relevance to the user's stated goal, novelty, potential impact, and
-evidence quality. Generate AT MOST 3 insights for the whole run — fewer, or zero, is
-correct and expected when nothing meaningfully changed. Do NOT generate an insight merely
-because a new document was fetched; a document with no novel, goal-relevant content
-should produce no insight.
+evidence quality. You are only called when the run contains at least one relevant,
+non-duplicate new finding, so generate BETWEEN 1 AND 3 insights for the whole run. Never
+return an empty insights array. Do NOT invent information or surface a generic restatement:
+every insight must be grounded in one or more supplied findings.
 
 Each insight must cite which finding(s) it is based on by index (evidenceDocumentIndexes)
 and, if applicable, which existing knowledge entry it relates to (relatedEntryId).
@@ -65,8 +65,8 @@ ${
     : "(none yet)"
 }
 
-Call the emit_result tool with at most 3 high-value insights, or an empty array if nothing
-meaningful was found this run.`;
+Call the emit_result tool with 1 to 3 high-value insights. At least one insight is required
+because the caller has already filtered this run down to relevant, non-duplicate findings.`;
 
   return generateStructured({
     system: SYSTEM_PROMPT,

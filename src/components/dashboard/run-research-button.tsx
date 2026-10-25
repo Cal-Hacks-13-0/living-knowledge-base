@@ -11,25 +11,20 @@ import { apiPost, ApiError } from "@/lib/client/api";
 export function RunResearchButton({ knowledgeBaseId }: { knowledgeBaseId: string }) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
-  const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function run() {
     setRunning(true);
-    setMessage(null);
+    setError(null);
     try {
-      const result = await apiPost<{ status: string; documentsFetched: number; documentsProcessed: number; insightsGenerated: number; errorMessage: string | null }>(
-        `/api/knowledge-bases/${knowledgeBaseId}/research`
-      );
-      setMessage({
-        kind: result.status === "FAILED" ? "error" : "success",
-        // Keep this friendly — raw per-source fetch errors live on the
-        // Sources tab for anyone who wants that detail, not surfaced here.
-        text: `Run ${result.status.toLowerCase()} — fetched ${result.documentsFetched}, processed ${result.documentsProcessed}, generated ${result.insightsGenerated} insight(s).`,
-      });
+      // Source-level failures are recorded on the Sources page and in the run
+      // history. Keep the overview quiet after a completed/partial run; its
+      // refreshed counts and newly generated insights are the user-facing result.
+      await apiPost(`/api/knowledge-bases/${knowledgeBaseId}/research`);
       router.refresh();
     } catch (err) {
       const text = err instanceof ApiError ? err.message : "Research run failed to start.";
-      setMessage({ kind: "error", text });
+      setError(text);
     } finally {
       setRunning(false);
     }
@@ -43,9 +38,9 @@ export function RunResearchButton({ knowledgeBaseId }: { knowledgeBaseId: string
           Run Research Now
         </Button>
       </RevealButton>
-      {message && (
-        <Alert variant={message.kind === "error" ? "danger" : "default"} className="max-w-md">
-          {message.text}
+      {error && (
+        <Alert variant="danger" className="max-w-md">
+          <p>{error}</p>
         </Alert>
       )}
     </div>

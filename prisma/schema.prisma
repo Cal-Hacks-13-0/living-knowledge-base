@@ -147,8 +147,8 @@ model SourceDocument {
   insightEvidence   InsightEvidence[]
 
   @@index([sourceId])
+  @@index([sourceId, url])
   @@unique([sourceId, contentHash])
-  @@unique([sourceId, url])
 }
 
 model KnowledgeEntry {
