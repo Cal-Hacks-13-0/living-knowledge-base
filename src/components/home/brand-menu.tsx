@@ -87,7 +87,7 @@ export function BrandMenu({ inboxCount }: { inboxCount: number }) {
           role="menu"
           aria-label="Navigation"
           onKeyDown={handleMenuKeyDown}
-          className="absolute left-0 top-full z-50 mt-1 w-52 rounded-lg border border-border bg-white p-1 shadow-md"
+          className="absolute left-0 top-full z-50 mt-1 w-52 rounded-lg border border-border bg-card p-1 shadow-md"
         >
           {items.map(({ href, label, icon: Icon, badge }, i) => {
             const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);

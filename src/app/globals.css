@@ -83,3 +83,25 @@ body {
     animation: none;
   }
 }
+
+/* Homepage only (app/(home)/layout.tsx): strict monochrome on near-black. The
+   palette tokens are re-pointed here, so shared components (menu, buttons,
+   hero text) follow without per-component overrides; other pages keep the
+   Axion green palette. */
+.home-mono {
+  --background: #080808;
+  --foreground: #f5f5f5;
+  --muted: #a3a3a3; /* 8.6:1 on the background */
+  --border: rgba(255, 255, 255, 0.14);
+  --surface: rgba(255, 255, 255, 0.07);
+  --card: #141414;
+  --accent: #f5f5f5;
+  --accent-foreground: #0a0a0a;
+  --accent-soft: rgba(255, 255, 255, 0.1);
+  --accent-ink: #f5f5f5;
+  /* Not flat black: a faint neutral glow toward the centre, like deep space. */
+  background: radial-gradient(ellipse 80% 70% at 50% 50%, #121212 0%, #0b0b0b 55%, #060606 100%) fixed,
+    var(--background);
+  color: var(--foreground);
+  color-scheme: dark;
+}

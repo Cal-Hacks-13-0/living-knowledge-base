@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NetworkSphere } from "./network-sphere";
 
 export interface LibraryKnowledgeBase {
   id: string;
@@ -181,9 +182,16 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
     // front of it. Nothing between here and those elements may create its own
     // stacking context (no transform/opacity on the card list or its wrappers).
     <div className="relative isolate flex flex-1 flex-col items-center px-4 pb-10" style={{ minHeight: STAGE_HEIGHT }}>
+      {/* Background, behind everything in this stacking context: the cursor-follow
+          network sphere, then a soft dark veil that keeps the heading readable. */}
+      <NetworkSphere />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_60%_38%_at_50%_14%,rgba(8,8,8,0.82),transparent_75%)]"
+      />
       {!isOpen && <div className="flex-1" aria-hidden />}
 
-      <div ref={heroRef} className={cn("flex flex-col items-center text-center", isOpen ? "pt-4 sm:pt-6" : "")}>
+      <div ref={heroRef} className={cn("flex flex-col items-center text-center", TEXT_HALO, isOpen ? "pt-4 sm:pt-6" : "")}>
         <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-muted sm:text-xs">
           An Autonomous Knowledge System
         </p>
@@ -202,7 +210,7 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
           {count === 0 ? (
             <li data-float-card className="relative w-full max-w-xs">
               <FloatingCard index={0}>
-                <span className="flex flex-col items-center gap-3 rounded-xl border border-border bg-white px-6 py-7 text-center shadow-[0_14px_32px_-14px_rgba(15,23,42,0.35)]">
+                <span className={cn("flex flex-col items-center gap-3 rounded-xl px-6 py-7 text-center", GLASS_CARD)}>
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-soft text-accent-ink">
                     <BookOpen className="h-4 w-4" />
                   </span>
@@ -228,9 +236,9 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
                       href={`/kb/${kb.id}`}
                       data-float-focus
                       aria-label={`${kb.name} knowledge vault`}
-                      className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"
+                      className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
-                      <VaultCardFace kb={kb} className="shadow-[0_14px_32px_-14px_rgba(15,23,42,0.35)]" />
+                      <VaultCardFace kb={kb} />
                     </Link>
                   </FloatingCard>
                 </li>
@@ -239,7 +247,7 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
                 <FloatingCard index={Math.min(count, limits.lg)}>
                   <Link
                     href="/new"
-                    className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-accent/40 bg-white/90 text-sm font-medium text-muted shadow-[0_14px_32px_-18px_rgba(15,23,42,0.3)] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+                    className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/30 bg-white/[0.05] text-sm font-medium text-muted backdrop-blur-[4px] hover:bg-white/[0.09] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                   >
                     <Plus className="h-5 w-5" />
                     New knowledge vault
@@ -263,16 +271,17 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
           onPointerLeave={() => setHovering(false)}
           onFocus={(e) => e.currentTarget.matches(":focus-visible") && setHovering(true)}
           onBlur={() => setHovering(false)}
-          className="relative block cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-8"
+          className="relative block cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-8 focus-visible:ring-offset-background"
           style={{ width: FOLDER_W, height: FOLDER_H }}
         >
           <FolderLayer visual={visual} hovering={hovering} z={10}>
+            {/* Translucent white glass: low-opacity fills, thin white edges, light backdrop blur. */}
             <span
-              className="absolute left-1/2 -bottom-4 h-6 w-[88%] -translate-x-1/2 rounded-full bg-emerald-950/25 blur-lg"
+              className="absolute left-1/2 -bottom-4 h-6 w-[88%] -translate-x-1/2 rounded-full bg-black/60 blur-lg"
               aria-hidden
             />
-            <span className="absolute left-3 top-0 h-8 w-28 rounded-t-xl bg-[#2b8251]" />
-            <span className="absolute inset-x-0 bottom-0 top-5 rounded-2xl bg-gradient-to-b from-[#2f8a56] to-[#24703f] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" />
+            <span className="absolute left-3 top-0 h-[22px] w-28 rounded-t-xl border border-b-0 border-white/25 bg-white/[0.09] backdrop-blur-[4px]" />
+            <span className="absolute inset-x-0 bottom-0 top-5 rounded-2xl border border-white/20 bg-gradient-to-b from-white/[0.11] to-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[4px]" />
           </FolderLayer>
 
           <FolderLayer visual={visual} hovering={hovering} z={20} hidden={phase !== "closed"}>
@@ -309,16 +318,16 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
                 transition: "transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1)",
               }}
             >
-              <span className="absolute inset-0 rounded-2xl bg-gradient-to-b from-[#68cf95] to-[#3fa66b] shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_18px_30px_-14px_rgba(20,83,45,0.55)]" />
+              <span className="absolute inset-0 rounded-2xl border border-white/30 bg-gradient-to-b from-white/[0.2] to-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),inset_0_-1px_0_rgba(255,255,255,0.08),0_24px_44px_-20px_rgba(0,0,0,0.85)] backdrop-blur-[5px]" />
               <span className="absolute inset-x-4 top-2 h-px bg-white/40" />
-              <span className="absolute bottom-4 left-4 rounded-md bg-white/85 px-2 py-1 text-[11px] font-semibold tracking-wide text-emerald-900 shadow-sm">
+              <span className="absolute bottom-4 left-4 rounded-md border border-white/25 bg-white/10 px-2 py-1 text-[11px] font-semibold tracking-wide text-white backdrop-blur-sm">
                 Axion
               </span>
             </span>
           </FolderLayer>
         </button>
 
-        <div ref={captionRef} className="flex flex-col items-center text-center">
+        <div ref={captionRef} className={cn("flex flex-col items-center text-center", TEXT_HALO)}>
           <h2 className="text-sm font-medium text-foreground">My knowledge vaults</h2>
           <p className="text-xs text-muted">{countLabel(count)}</p>
         </div>
@@ -342,7 +351,7 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
               <li key={kb.id} className={shownBeyond(i, limits)}>
                 <Link
                   href={`/kb/${kb.id}`}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-white px-3 py-2.5 transition-colors hover:border-accent/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  className="flex items-center gap-3 rounded-lg border border-white/15 bg-white/[0.06] px-3 py-2.5 backdrop-blur-[3px] transition-colors hover:border-white/30 hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-ink">
                     <BookOpen className="h-3.5 w-3.5" />
@@ -362,6 +371,13 @@ export function KnowledgeLibrary({ knowledgeBases }: { knowledgeBases: LibraryKn
     </div>
   );
 }
+
+// A soft near-black halo so text stays readable where the network's lines pass behind it.
+const TEXT_HALO = "[text-shadow:0_0_14px_#080808,0_0_6px_#080808,0_0_2px_#080808]";
+
+// The vault cards' glass: translucent white over the dark page, readable white text.
+const GLASS_CARD =
+  "border border-white/20 bg-white/[0.08] backdrop-blur-[4px] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_14px_32px_-16px_rgba(0,0,0,0.75)]";
 
 const FLOAT_ITEM_WIDTH =
   // Each basis is a hair under its exact share so sub-pixel rounding never wraps a row early.
@@ -386,7 +402,8 @@ function VaultCardFace({ kb, className }: { kb: LibraryKnowledgeBase; className?
   return (
     <span
       className={cn(
-        "flex aspect-[4/3] flex-col justify-between overflow-hidden rounded-xl border border-border bg-white p-3.5 text-left sm:p-4",
+        "flex aspect-[4/3] flex-col justify-between overflow-hidden rounded-xl p-3.5 text-left sm:p-4",
+        GLASS_CARD,
         className
       )}
     >

@@ -9,8 +9,10 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
   const pendingProposals = await prisma.knowledgeChangeProposal.count({ where: { status: "PENDING" } });
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="flex h-14 shrink-0 items-center px-4">
+    // `home-mono` re-points the colour tokens to the homepage's monochrome theme (globals.css).
+    // The header sits above the full-viewport network sphere drawn by the page.
+    <div className="home-mono flex min-h-dvh flex-col">
+      <header className="relative z-20 flex h-14 shrink-0 items-center px-4">
         <BrandMenu inboxCount={pendingProposals} />
       </header>
       <main className="flex flex-1 flex-col">{children}</main>
