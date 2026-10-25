@@ -3,6 +3,9 @@ import { ok, handleApiError } from "@/lib/api/response";
 import { BlueprintGenerateRequestSchema } from "@/lib/validation/schemas";
 import { generateBlueprint } from "@/lib/ai/blueprint-agent";
 
+// Vercel function time limit in seconds (one structured AI call, retried once on invalid output).
+export const maxDuration = 120;
+
 export async function POST(req: NextRequest) {
   try {
     const body = BlueprintGenerateRequestSchema.parse(await req.json());

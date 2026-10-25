@@ -4,6 +4,9 @@ import { ok, handleApiError } from "@/lib/api/response";
 import { ChatRequestSchema } from "@/lib/validation/schemas";
 import { answerAssistantQuestion } from "@/lib/ai/assistant-agent";
 
+// Vercel function time limit in seconds (tool calls can trigger a full research run).
+export const maxDuration = 300;
+
 /**
  * Global AI Assistant chat — works across every knowledge base the user has,
  * not scoped to one. Ephemeral — history is passed in by the client on every

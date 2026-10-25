@@ -3,6 +3,9 @@ import { ok, handleApiError } from "@/lib/api/response";
 import { SetupQuestionsRequestSchema } from "@/lib/validation/schemas";
 import { generateSetupQuestions } from "@/lib/ai/setup-agent";
 
+// Vercel function time limit in seconds (one structured AI call).
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const body = SetupQuestionsRequestSchema.parse(await req.json());

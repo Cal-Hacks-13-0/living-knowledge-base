@@ -285,3 +285,28 @@ treated as production-ready multi-user security.
 
 - [Ellie Du](https://github.com/ellied07)
 - [Huierpeng](https://github.com/huier2006-a11y)
+
+## 9. Deploying to Vercel
+
+- Framework preset **Next.js**, root directory `./`, default install (`npm install`, which runs
+  `prisma generate` via `postinstall`) and build (`next build`) commands. Node 22 (`engines`).
+- **Database:** the serverless filesystem can't hold the SQLite file, so production uses a hosted
+  [Turso](https://turso.tech) (libSQL) database with the same schema, through Prisma's libSQL
+  adapter (`src/lib/db/prisma.ts`). Local dev and tests are unchanged (SQLite file).
+- **Environment variables** (all server-only — none are exposed to the browser):
+
+  | Name | Purpose |
+  |---|---|
+  | `TURSO_DATABASE_URL` | Turso database URL (`libsql://…`) |
+  | `TURSO_AUTH_TOKEN` | Turso auth token |
+  | `ANTHROPIC_API_KEY` | Claude API key for all AI features |
+  | `ANTHROPIC_MODEL` | Optional model override |
+  | `VAULT_DIR` | Set to `/tmp/vault` (best-effort Markdown export; `/tmp` is temporary) |
+
+- **Schema changes:** create the migration locally (`npm run db:migrate`), then apply it to Turso
+  with `TURSO_DATABASE_URL=… TURSO_AUTH_TOKEN=… npm run db:migrate:turso` before deploying code
+  that needs it. Re-running is safe (applied migrations are recorded in `_turso_migrations`).
+- **Not available on Vercel:** scheduled (Daily/Weekly/Monthly) research — the in-process
+  scheduler is disabled there; manual "Run Research Now" works. AI routes set `maxDuration`.
+- **No authentication:** anyone who can open the deployment can read and change all data and
+  use the configured Anthropic key (see §5/§7).

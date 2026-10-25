@@ -14,6 +14,11 @@ import { runResearch } from "@/lib/research/orchestrator";
  * and by the manual "Run Research Now" button.
  */
 
+// On Vercel (serverless) there is no long-lived process for node-cron to live in:
+// timers would only fire while some function instance happens to be warm. Scheduled
+// monitoring is therefore off there; manual "Run Research Now" still works.
+const SCHEDULER_ENABLED = !process.env.VERCEL;
+
 const CRON_EXPRESSIONS: Record<string, string> = {
   DAILY: "0 3 * * *", // 03:00 every day
   WEEKLY: "0 3 * * 1", // 03:00 every Monday
@@ -46,6 +51,7 @@ async function runScheduled(knowledgeBaseId: string) {
 
 /** (Re)registers the cron job for one knowledge base based on its current frequency. */
 export function syncJobForKnowledgeBase(knowledgeBaseId: string, frequency: string) {
+  if (!SCHEDULER_ENABLED) return;
   const state = getState();
   const existing = state.tasks.get(knowledgeBaseId);
   if (existing) {
@@ -71,6 +77,7 @@ export function unscheduleKnowledgeBase(knowledgeBaseId: string) {
 
 /** Called once at server startup (see src/instrumentation.ts). */
 export async function initScheduler() {
+  if (!SCHEDULER_ENABLED) return;
   const state = getState();
   if (state.initialized) return;
   state.initialized = true;
