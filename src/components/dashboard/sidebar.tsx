@@ -11,10 +11,14 @@ export interface SidebarKnowledgeBase {
   name: string;
 }
 
-// Forest Green sidebar: Paper White text, Original Sage icons, Deep Sage for the selected item.
-const navItem = "rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-icon";
+// Soft-grey, architectural sidebar: near-black text, muted-grey icons. The
+// selected item gets a light neutral surface plus a thin Signal Orange
+// indicator on its leading edge — never a full accent fill (see redesign
+// brief §3: "Do not make the entire selected item orange").
+const navItem =
+  "rounded-lg border-l-2 border-transparent px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-icon";
 const navIdle = "text-sidebar-foreground hover:bg-sidebar-hover";
-const navActive = "bg-sidebar-active text-sidebar-foreground";
+const navActive = "border-accent bg-sidebar-active text-sidebar-foreground";
 
 export function Sidebar({
   knowledgeBases,
@@ -54,7 +58,7 @@ export function Sidebar({
                 {label}
               </span>
               {!!badge && (
-                <span className="rounded-full bg-sidebar-icon px-1.5 py-0.5 text-[10px] font-semibold text-sidebar">
+                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
                   {badge}
                 </span>
               )}
@@ -114,7 +118,7 @@ export function Sidebar({
         <div className="flex min-w-0 items-center gap-2.5">
           <span
             aria-hidden
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-active text-xs font-semibold text-sidebar-foreground"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background"
           >
             {DEMO_IDENTITY.initials}
           </span>

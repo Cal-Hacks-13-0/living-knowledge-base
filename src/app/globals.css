@@ -1,25 +1,37 @@
 @import "tailwindcss";
 
-/* Axion palette. Exact brand values, plus a few derived shades (marked) for
-   hover, muted text, and sidebar text that keep WCAG AA contrast. */
+/* Axion workspace palette: monochrome paper + ink, with Signal Orange held
+   back for small interaction signals (active nav, new insights, AI
+   activity, notifications) — roughly 95% neutral / 5% orange by visual
+   area, never a primary-button or large-fill color. This is the light-mode
+   counterpart to the landing page's dark theme; the landing page itself
+   lives entirely behind `.home-mono` below, which re-points every one of
+   these token names for `(home)` only, so changes here never reach it.
+   Two values are nudged from their nominal brief hex for WCAG AA text
+   contrast (checked against every surface they appear as text on — paper,
+   white cards, the soft-grey sidebar, and pale-orange badges): muted grey
+   #777777 → #6b6b6b, and Signal Orange #FF5A28, which is 3:1 or under
+   everywhere as text, gets a dedicated darker `--accent-strong` for
+   links/labels (the base `--accent` stays the true Signal Orange for
+   non-text fills/indicators, same split this file already used for the
+   previous sage-green palette). */
 :root {
-  --background: #fafaf7; /* Paper White — page background */
-  --foreground: #25332b; /* Deep Ink — headings and body text */
-  --muted: #5c6b62; /* derived from Deep Ink: secondary text (≥4.9:1 on Paper/Mint) */
-  --border: #dce4db; /* Soft Border — borders and dividers */
-  --surface: #f1f5ef; /* derived from Soft Mint: hover and subtle fills */
-  --card: #ffffff; /* Card White — cards and expanded content */
-  --accent: #547a61; /* Sage Green — primary buttons */
-  --accent-foreground: #ffffff;
-  --accent-soft: #edf2eb; /* Soft Mint — AI overview and assistant surfaces */
-  --accent-strong: #3b5949; /* Deep Sage — links and interactive text on light backgrounds */
-  --accent-decor: #a6b9a3; /* Original Sage — decorative accents only (not body text) */
-  --sidebar: #263e35; /* Forest Green */
-  --sidebar-foreground: #fafaf7; /* Paper White */
-  --sidebar-muted: #c3d1c0; /* derived: secondary sidebar text (7.2:1 on Forest) */
-  --sidebar-icon: #a6b9a3; /* Original Sage: sidebar icons (5.5:1 on Forest) */
-  --sidebar-active: #3b5949; /* Deep Sage — selected navigation */
-  --sidebar-hover: #2f4a3f; /* derived: between Forest and Deep Sage */
+  --background: #fafaf8; /* Paper White — page background */
+  --foreground: #111111; /* Near Black — primary text, buttons, icons */
+  --muted: #6b6b6b; /* Muted Grey (contrast-safe) — supporting text */
+  --border: #e5e5e3; /* Border Grey — dividers and card outlines */
+  --surface: #f2f2f0; /* Soft Grey — sidebar and secondary surfaces */
+  --card: #ffffff; /* Pure White — cards and panels */
+  --accent: #ff5a28; /* Signal Orange — small indicators/fills, never as text */
+  --accent-foreground: #111111; /* icon atop a solid accent fill: near-black reads far better here than white (6.1:1 vs 3.1:1) */
+  --accent-soft: #fff0e8; /* Pale Orange — subtle highlighted states */
+  --accent-strong: #c73d14; /* deeper Signal Orange, safe as text/links (4.5:1+ on every workspace surface) */
+  --sidebar: #f2f2f0; /* Soft Grey — quiet, architectural, same family as --surface */
+  --sidebar-foreground: #111111;
+  --sidebar-muted: #6b6b6b;
+  --sidebar-icon: #6b6b6b;
+  --sidebar-active: #ffffff; /* selected row surface — a light neutral fill, never the full accent */
+  --sidebar-hover: #e9e9e6;
 }
 
 @theme inline {
@@ -32,7 +44,6 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
   --color-accent-strong: var(--accent-strong);
-  --color-accent-decor: var(--accent-decor);
   --color-card: var(--card);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);

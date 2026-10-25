@@ -92,7 +92,7 @@ export function AiAssistantPanel({
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
           }}
-          className="fixed right-0 top-0 z-20 flex h-dvh shrink-0 flex-col overflow-hidden border-l border-border bg-white shadow-xl"
+          className="fixed right-0 top-0 z-20 flex h-dvh shrink-0 flex-col overflow-hidden border-l border-border bg-white shadow-lg"
         >
           <motion.div
             variants={ASSISTANT_CONTENT_VARIANTS}
