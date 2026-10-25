@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { RevealButton } from "@/components/motion/reveal-button";
 import { apiPatch, ApiError } from "@/lib/client/api";
 
 export function SettingsForm({
@@ -68,10 +69,12 @@ export function SettingsForm({
           Daily/weekly runs are scheduled in-process and only fire while this server is running — see README.
         </p>
       </div>
-      <Button onClick={save} disabled={saving} className="self-start">
-        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-        Save changes
-      </Button>
+      <RevealButton delay={0.4} className="self-start">
+        <Button onClick={save} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Save changes
+        </Button>
+      </RevealButton>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { RevealButton } from "@/components/motion/reveal-button";
 import { apiPost, ApiError } from "@/lib/client/api";
 
 export function RunResearchButton({ knowledgeBaseId }: { knowledgeBaseId: string }) {
@@ -36,10 +37,12 @@ export function RunResearchButton({ knowledgeBaseId }: { knowledgeBaseId: string
 
   return (
     <div className="flex flex-col gap-2">
-      <Button onClick={run} disabled={running} size="sm">
-        {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-        Run Research Now
-      </Button>
+      <RevealButton delay={0.24}>
+        <Button onClick={run} disabled={running} size="sm">
+          {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+          Run Research Now
+        </Button>
+      </RevealButton>
       {message && (
         <Alert variant={message.kind === "error" ? "danger" : "default"} className="max-w-md">
           {message.text}

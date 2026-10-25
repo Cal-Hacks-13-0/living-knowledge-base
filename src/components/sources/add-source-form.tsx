@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
+import { RevealButton } from "@/components/motion/reveal-button";
 import { apiPost, ApiError } from "@/lib/client/api";
 
 export function AddSourceForm({ knowledgeBaseId }: { knowledgeBaseId: string }) {
@@ -55,10 +56,12 @@ export function AddSourceForm({ knowledgeBaseId }: { knowledgeBaseId: string }) 
           <option value="GITHUB_RELEASES">GitHub releases</option>
           <option value="HTML">HTML page</option>
         </Select>
-        <Button type="submit" variant="secondary" disabled={submitting}>
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          Add
-        </Button>
+        <RevealButton delay={0.4}>
+          <Button type="submit" variant="secondary" disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Add
+          </Button>
+        </RevealButton>
       </div>
     </form>
   );

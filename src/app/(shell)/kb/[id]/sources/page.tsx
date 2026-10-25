@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddSourceForm } from "@/components/sources/add-source-form";
+import { PageEntrance } from "@/components/motion/page-entrance";
+import { AnimatedText } from "@/components/motion/animated-text";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 import { Radio } from "lucide-react";
 
@@ -15,11 +17,11 @@ export default async function SourcesPage({ params }: { params: Promise<{ id: st
   });
 
   return (
-    <div className="flex flex-col gap-5">
+    <PageEntrance className="flex flex-col gap-5">
       {sources.length === 0 ? (
         <EmptyState icon={<Radio className="h-5 w-5" />} title="No sources tracked yet" />
       ) : (
-        <div className="flex flex-col gap-3">
+        <AnimatedText delay={0.16} className="flex flex-col gap-3">
           {sources.map((source) => (
             <Card key={source.id}>
               <CardContent className="flex items-center justify-between gap-3 py-4">
@@ -42,10 +44,12 @@ export default async function SourcesPage({ params }: { params: Promise<{ id: st
               </CardContent>
             </Card>
           ))}
-        </div>
+        </AnimatedText>
       )}
 
-      <AddSourceForm knowledgeBaseId={id} />
-    </div>
+      <AnimatedText delay={0.3}>
+        <AddSourceForm knowledgeBaseId={id} />
+      </AnimatedText>
+    </PageEntrance>
   );
 }

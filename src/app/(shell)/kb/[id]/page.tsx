@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { RunResearchButton } from "@/components/dashboard/run-research-button";
+import { PageEntrance } from "@/components/motion/page-entrance";
+import { AnimatedText } from "@/components/motion/animated-text";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 import { BookOpen, Radio, Sparkles, Clock, AlertCircle } from "lucide-react";
 
@@ -28,16 +30,16 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
     ]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <PageEntrance className="flex flex-col gap-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="max-w-xl">
+        <AnimatedText delay={0.16} className="max-w-xl">
           <p className="text-sm text-muted">{kb.description}</p>
           <p className="mt-2 text-xs text-muted">Goal: &ldquo;{kb.userGoal}&rdquo;</p>
-        </div>
+        </AnimatedText>
         <RunResearchButton knowledgeBaseId={id} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <AnimatedText delay={0.34} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Monitoring"
           value={kb.monitoringFrequency === "MANUAL" ? "Manual" : kb.monitoringFrequency}
@@ -55,13 +57,13 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
           tone={pendingInsights + pendingProposals > 0 ? "warning" : "default"}
           icon={<AlertCircle className="h-3.5 w-3.5" />}
         />
-      </div>
+      </AnimatedText>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <AnimatedText delay={0.41} className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>What&apos;s in the Vault</CardTitle>
-            <Link href={`/kb/${id}/library`} className="text-xs font-medium text-accent">
+            <Link href={`/kb/${id}/library`} className="text-xs font-medium text-accent-strong">
               View all
             </Link>
           </CardHeader>
@@ -76,7 +78,7 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Recently discovered</CardTitle>
-            <Link href={`/kb/${id}/insights`} className="text-xs font-medium text-accent">
+            <Link href={`/kb/${id}/insights`} className="text-xs font-medium text-accent-strong">
               View all
             </Link>
           </CardHeader>
@@ -104,23 +106,25 @@ export default async function KnowledgeBaseOverviewPage({ params }: { params: Pr
             )}
           </CardContent>
         </Card>
-      </div>
+      </AnimatedText>
 
       {pendingInsights + pendingProposals > 0 && (
-        <Card className="border-amber-200 bg-amber-50/60">
-          <CardContent className="flex items-center justify-between py-4">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {pendingInsights} insight(s) and {pendingProposals} proposed change(s) await your review.
-              </p>
-              <p className="text-xs text-muted">Nothing is applied to your knowledge vault until you approve it.</p>
-            </div>
-            <Link href={`/kb/${id}/insights`} className="text-sm font-medium text-accent">
-              Review now →
-            </Link>
-          </CardContent>
-        </Card>
+        <AnimatedText delay={0.48}>
+          <Card className="border-amber-200 bg-amber-50/60">
+            <CardContent className="flex items-center justify-between py-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {pendingInsights} insight(s) and {pendingProposals} proposed change(s) await your review.
+                </p>
+                <p className="text-xs text-muted">Nothing is applied to your knowledge vault until you approve it.</p>
+              </div>
+              <Link href={`/kb/${id}/insights`} className="text-sm font-medium text-accent-strong">
+                Review now →
+              </Link>
+            </CardContent>
+          </Card>
+        </AnimatedText>
       )}
-    </div>
+    </PageEntrance>
   );
 }
