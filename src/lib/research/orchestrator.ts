@@ -3,7 +3,7 @@ import { isAiConfigured } from "@/lib/ai/client";
 import { extractKnowledge } from "@/lib/ai/extraction-agent";
 import { generateInsights, type InsightFinding } from "@/lib/ai/insight-agent";
 import { compareAgainstExisting } from "@/lib/knowledge/comparison";
-import { getKnowledgeBaseOrThrow, listMonitorableSources } from "@/lib/knowledge/repository";
+import { getKnowledgeBaseOrThrow, listCategoryChoices, listMonitorableSources } from "@/lib/knowledge/repository";
 import { applyComparisonClassification } from "@/lib/knowledge/classification";
 import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 import { fetchRssSource } from "./rss-fetcher";
@@ -163,6 +163,7 @@ export async function runResearch(
 
     if (aiConfigured) {
       const toProcess = storedDocs.slice(0, MAX_DOCUMENTS_PROCESSED_PER_RUN);
+      const categories = toProcess.length > 0 ? await listCategoryChoices(knowledgeBaseId) : [];
       for (const { doc, sourceDocumentId } of toProcess) {
         try {
           const extraction = await extractKnowledge({
@@ -170,6 +171,7 @@ export async function runResearch(
             title: doc.title,
             url: doc.url,
             content: doc.content,
+            categories,
           });
           if (!extraction.isRelevant) continue;
 

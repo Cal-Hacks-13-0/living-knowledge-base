@@ -68,13 +68,6 @@ export async function generateStructured<T extends z.ZodTypeAny>({
 
   let lastError: string | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
-    if (lastError) {
-      messages.push({
-        role: "user",
-        content: `Your previous response did not match the required schema: ${lastError}. Please call the ${toolName} tool again with corrected input.`,
-      });
-    }
-
     const response = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
@@ -98,9 +91,19 @@ export async function generateStructured<T extends z.ZodTypeAny>({
       return parsed.data;
     }
     lastError = parsed.error.message;
+    // The API requires every tool_use to be answered by a tool_result in the
+    // very next user turn, so the schema error goes back as that result.
+    messages.push({ role: "assistant", content: response.content });
     messages.push({
-      role: "assistant",
-      content: response.content,
+      role: "user",
+      content: [
+        {
+          type: "tool_result",
+          tool_use_id: toolUse.id,
+          is_error: true,
+          content: `Your input did not match the required schema: ${lastError}. Please call the ${toolName} tool again with corrected input.`,
+        },
+      ],
     });
   }
 
@@ -135,6 +138,7 @@ export async function generateWithTools({
   maxIterations = 4,
   maxTokens = 1024,
   model = DEFAULT_MODEL,
+  fallbackReply,
 }: {
   system: string;
   initialPrompt: string;
@@ -143,6 +147,8 @@ export async function generateWithTools({
   maxIterations?: number;
   maxTokens?: number;
   model?: string;
+  /** Reply when `maxIterations` runs out — e.g. to report changes the tools already made. */
+  fallbackReply?: () => string;
 }): Promise<string> {
   const anthropic = getClient();
 
@@ -189,7 +195,10 @@ export async function generateWithTools({
     messages.push({ role: "user", content: toolResults });
   }
 
-  return "I tried a few steps to do that but didn't finish — could you try again, maybe with a smaller request?";
+  return (
+    fallbackReply?.() ??
+    "I tried a few steps to do that but didn't finish — could you try again, maybe with a smaller request?"
+  );
 }
 
 /** Plain text generation, for cases that don't need structured output. */

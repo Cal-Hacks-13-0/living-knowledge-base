@@ -21,6 +21,7 @@ const extraction: ExtractionResponse = {
   publishedAt: null,
   excerpts: [],
   isRelevant: true,
+  category: null,
 };
 
 function comparison(overrides: Partial<ComparisonResponse>): ComparisonResponse {

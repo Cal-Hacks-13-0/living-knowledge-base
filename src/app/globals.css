@@ -197,6 +197,12 @@ body {
   }
 }
 
+/* Native <select> option lists: a solid dark surface with light text. */
+.ambient select option {
+  background-color: #25272d;
+  color: var(--foreground);
+}
+
 /* Status colours: the light-theme pastel chips/text, re-tuned for a dark surface. */
 .ambient .bg-red-50,
 .ambient .hover\:bg-red-50:hover {

@@ -85,6 +85,9 @@ export const ExtractionResponseSchema = z.object({
   publishedAt: z.string().nullable().default(null),
   excerpts: z.array(z.string()).default([]),
   isRelevant: z.boolean().default(true),
+  // Exact name of the best-fitting existing category of the vault, or null
+  // when none clearly fits (the entry then stays Uncategorized).
+  category: z.string().nullable().default(null),
 });
 export type ExtractionResponse = z.infer<typeof ExtractionResponseSchema>;
 

@@ -6,8 +6,17 @@ import { applyComparisonClassification } from "@/lib/knowledge/classification";
 import { fetchHtmlSource } from "@/lib/research/html-fetcher";
 import { filterOutExactDuplicates } from "@/lib/research/deduplicator";
 import { validateUrl } from "@/lib/validation/schemas";
+import { listCategoryChoices } from "@/lib/knowledge/repository";
 import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 import { runResearch, OverlappingRunError } from "@/lib/research/orchestrator";
+import {
+  assignEntriesToCategory,
+  getEntryDetails,
+  listEntriesPage,
+  listVaultCategories,
+  ENTRY_PAGE_SIZE,
+} from "@/lib/knowledge/categorize";
+import { NotFoundError } from "@/lib/api/response";
 import type { ToolDefinition } from "./client";
 
 /**
@@ -91,6 +100,7 @@ export async function fetchAndArchiveUrl(knowledgeBaseId: string, rawUrl: string
     title: doc.title,
     url: doc.url,
     content: doc.content,
+    categories: await listCategoryChoices(kb.id),
   });
 
   if (!extraction.isRelevant) {
@@ -155,11 +165,114 @@ export const ProposeNewKnowledgeBaseSchema = z.object({
     ),
 });
 
-/** Builds the global tool definitions + dispatcher. Not bound to one KB. */
+// --- Entry organization tools (scoped to the vault the user is viewing) ------
+
+const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max)}… [truncated — use get_entry for the full text]` : text);
+
+export async function listCategoriesTool(knowledgeBaseId: string): Promise<string> {
+  const { categories, uncategorized } = await listVaultCategories(knowledgeBaseId);
+  if (categories.length === 0) return `This knowledge vault has no categories yet. Uncategorized entries: ${uncategorized}.`;
+  return [
+    `Categories in this knowledge vault (id | name | entries | description):`,
+    ...categories.map((c) => `- ${c.id} | ${c.name} | ${c.entryCount} | ${c.description || "(no description)"}`),
+    `Uncategorized entries: ${uncategorized}.`,
+  ].join("\n");
+}
+
+export async function listEntriesTool(
+  knowledgeBaseId: string,
+  input: { filter: "all" | "uncategorized" | "category"; categoryId?: string; cursor?: string }
+): Promise<string> {
+  if (input.filter === "category" && !input.categoryId) return "filter \"category\" needs a categoryId.";
+  const filter = input.filter === "category" ? { categoryId: input.categoryId! } : input.filter;
+  let page;
+  try {
+    page = await listEntriesPage({ knowledgeBaseId, filter, cursor: input.cursor ?? null });
+  } catch {
+    return "That cursor isn't valid for this list — start again without a cursor.";
+  }
+  const label = input.filter === "uncategorized" ? "uncategorized entries" : input.filter === "category" ? "entries in that category" : "entries";
+  if (page.total === 0) return `There are no ${label} in this knowledge vault.`;
+  const lines = page.entries.map(
+    (e) =>
+      `- id=${e.id} | ${e.status} | category: ${e.category?.name ?? "Uncategorized"} | source: ${e.sourceDocument?.source.name ?? "none"}${
+        e.sourceDocument ? ` (${e.sourceDocument.url})` : ""
+      }\n  title: ${e.title}\n  summary: ${clip(e.summary, 400)}`
+  );
+  return [
+    `This page has ${page.entries.length} of ${page.total} ${label} (drafts included; stable order).`,
+    ...lines,
+    page.nextCursor
+      ? `MORE ENTRIES REMAIN — call list_entries again with cursor="${page.nextCursor}" to see the next page. You have NOT seen all ${page.total} yet.`
+      : `End of list — every one of the ${page.total} ${label} has now been listed (across all pages).`,
+  ].join("\n");
+}
+
+export async function getEntryTool(knowledgeBaseId: string, entryId: string): Promise<string> {
+  const e = await getEntryDetails(knowledgeBaseId, entryId);
+  if (!e) return `No entry with id ${entryId} in this knowledge vault.`;
+  return [
+    `id=${e.id} | ${e.status} | category: ${e.category?.name ?? "Uncategorized"}`,
+    `title: ${e.title}`,
+    `summary: ${e.summary}`,
+    `content: ${clip(e.content, 4000)}`,
+    e.sourceDocument
+      ? `source: ${e.sourceDocument.source.name} — ${e.sourceDocument.title} (${e.sourceDocument.url})\nsource excerpt: ${clip(e.sourceDocument.content, 2000)}`
+      : "source: none",
+  ].join("\n");
+}
+
+export async function assignEntriesTool(
+  knowledgeBaseId: string,
+  input: { categoryId: string | null; entryIds: string[] }
+): Promise<string> {
+  let result;
+  try {
+    result = await assignEntriesToCategory({ knowledgeBaseId, entryIds: input.entryIds, categoryId: input.categoryId });
+  } catch (err) {
+    if (err instanceof NotFoundError) return `FAILED — nothing was changed: ${err.message}. Call list_categories for valid ids.`;
+    return `FAILED — nothing was changed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+  const where = result.category ? `"${result.category.name}"` : "Uncategorized";
+  const out = [`Saved. Category set to ${where} for ${result.updated.length} entr${result.updated.length === 1 ? "y" : "ies"}.`];
+  if (result.updated.length) out.push(`Moved: ${result.updated.map((e) => `"${e.title}"`).join("; ")}`);
+  if (result.unchanged.length) out.push(`Already in ${where} (no change): ${result.unchanged.map((e) => `"${e.title}"`).join("; ")}`);
+  if (result.notFound.length) out.push(`NOT changed — not entries of this knowledge vault: ${result.notFound.join(", ")}`);
+  out.push("Status, content and sources were not modified.");
+  return out.join("\n");
+}
+
+const ListEntriesSchema = z.object({
+  filter: z
+    .enum(["all", "uncategorized", "category"])
+    .describe('Which entries: "all", "uncategorized" (no category), or "category" (one category — give categoryId).'),
+  categoryId: z.string().optional().describe('Required when filter is "category".'),
+  cursor: z.string().optional().describe("The cursor from the previous page's result, to get the next page."),
+});
+const GetEntrySchema = z.object({ entryId: z.string().describe("The entry id from list_entries.") });
+const AssignEntriesSchema = z.object({
+  categoryId: z
+    .string()
+    .nullable()
+    .describe("Destination category id from list_categories, or null to move the entries back to Uncategorized."),
+  entryIds: z.array(z.string()).min(1).max(50).describe("Entry ids from list_entries (all going to this one category)."),
+});
+
+/**
+ * Builds the global tool definitions + dispatcher. URL archiving and
+ * research take a knowledgeBaseId from the model; the entry-organization
+ * tools only ever act on `currentKnowledgeBaseId` (the vault the user is
+ * viewing), so the model can't reach into another vault with them.
+ */
 export function buildAssistantTools({
   onProposeKnowledgeBase,
+  currentKnowledgeBaseId = null,
+  onChange,
 }: {
   onProposeKnowledgeBase: (goal: string) => void;
+  currentKnowledgeBaseId?: string | null;
+  /** Called with each persisted change (a short description), for honest reporting. */
+  onChange?: (summary: string) => void;
 }): {
   definitions: ToolDefinition[];
   execute: (name: string, input: unknown) => Promise<string>;
@@ -183,7 +296,33 @@ export function buildAssistantTools({
         "Call this when the user wants to START A NEW knowledge base (not add to an existing one) — e.g. they describe a new topic/goal they want tracked that isn't one of their existing knowledge bases. This does not create anything itself; it shows the user a confirmation card they can click to jump into the knowledge-base creation flow with their goal pre-filled, so they don't have to retype it. Never create a knowledge base any other way — there is no tool for that, only this proposal step.",
       inputSchema: ProposeNewKnowledgeBaseSchema,
     },
+    {
+      name: "list_categories",
+      description:
+        "Lists the categories of the knowledge vault the user is currently viewing (ids, names, descriptions, entry counts) and how many entries are uncategorized. Read-only.",
+      inputSchema: z.object({}),
+    },
+    {
+      name: "list_entries",
+      description: `Lists knowledge entries of the vault the user is currently viewing — drafts included — ${ENTRY_PAGE_SIZE} per page with stable ids, category, source and a summary. Paginated: if the result says more entries remain, call again with the given cursor until it says "End of list". Read-only.`,
+      inputSchema: ListEntriesSchema,
+    },
+    {
+      name: "get_entry",
+      description:
+        "Full details of one entry in the current vault: complete summary and content, its source, and an excerpt of the source document. Use when a summary is truncated or too thin to classify confidently. Read-only.",
+      inputSchema: GetEntrySchema,
+    },
+    {
+      name: "assign_entries_to_category",
+      description:
+        "Saves a category assignment: moves the given entries (of the vault the user is currently viewing) into one existing category, or back to Uncategorized with categoryId null. Only the category changes — drafts stay drafts, nothing is published, rewritten or deleted. ONLY call this when the user explicitly asks you to move / assign / organize / categorize entries — never for a request that only asks for suggestions. Call once per destination category. The result is what was actually saved.",
+      inputSchema: AssignEntriesSchema,
+    },
   ];
+
+  const needsVault = () =>
+    "I can only organize entries in the knowledge vault the user is currently viewing, and they aren't viewing one. Ask them to open that vault and try again.";
 
   async function execute(name: string, input: unknown): Promise<string> {
     if (name === "fetch_and_archive_url") {
@@ -201,6 +340,27 @@ export function buildAssistantTools({
       if (!parsed.success) return `Invalid tool input: ${parsed.error.message}`;
       onProposeKnowledgeBase(parsed.data.goal);
       return "A confirmation card was shown to the user with this goal — they can click it to start creating the knowledge base. Don't claim it was already created.";
+    }
+    if (name === "list_categories" || name === "list_entries" || name === "get_entry" || name === "assign_entries_to_category") {
+      if (!currentKnowledgeBaseId) return needsVault();
+      const kb = await resolveKnowledgeBase(currentKnowledgeBaseId);
+      if (!kb) return needsVault();
+      if (name === "list_categories") return listCategoriesTool(kb.id);
+      if (name === "list_entries") {
+        const parsed = ListEntriesSchema.safeParse(input);
+        if (!parsed.success) return `Invalid tool input: ${parsed.error.message}`;
+        return listEntriesTool(kb.id, parsed.data);
+      }
+      if (name === "get_entry") {
+        const parsed = GetEntrySchema.safeParse(input);
+        if (!parsed.success) return `Invalid tool input: ${parsed.error.message}`;
+        return getEntryTool(kb.id, parsed.data.entryId);
+      }
+      const parsed = AssignEntriesSchema.safeParse(input);
+      if (!parsed.success) return `Invalid tool input: ${parsed.error.message}`;
+      const result = await assignEntriesTool(kb.id, parsed.data);
+      if (result.startsWith("Saved.")) onChange?.(result.split("\n").slice(0, 2).join(" "));
+      return result;
     }
     return `Unknown tool: ${name}`;
   }

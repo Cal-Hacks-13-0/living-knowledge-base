@@ -69,6 +69,14 @@ export const CreateCategoryRequestSchema = z.object({
   description: z.string().max(2000).default(""),
 });
 
+// --- /api/knowledge-bases/:id/entries (PATCH) ------------------------------
+// Assign one or many entries to a category of the same knowledge vault
+// (null = back to Uncategorized). Only the category changes.
+export const AssignEntryCategoryRequestSchema = z.object({
+  entryIds: z.array(z.string().min(1)).min(1).max(200),
+  categoryId: z.string().min(1).nullable(),
+});
+
 // --- /api/insights/:id (PATCH) ----------------------------------------------
 export const UpdateInsightRequestSchema = z.object({
   status: z.enum(["PENDING", "SAVED", "DISMISSED", "ACTIONED"]),

@@ -16,24 +16,37 @@ Rules:
 - Preserve provenance: pull short verbatim excerpts (1-2 sentences each) that support your
   key claims so later steps can cite the source.
 - Extract a publishedAt date only if one is clearly present in the content; otherwise null.
-- Keep the summary factual and neutral.`;
+- Keep the summary factual and neutral.
+- category: if the knowledge vault's categories are listed, set this to the exact name of the
+  one category this document clearly belongs to. If none clearly fits, or you're unsure, set
+  it to null — never invent a category or pick one at random.`;
 
 export async function extractKnowledge({
   knowledgeBaseGoal,
   title,
   url,
   content,
+  categories = [],
 }: {
   knowledgeBaseGoal: string;
   title: string;
   url: string;
   content: string;
+  /** The vault's existing top-level categories, to file the entry under. */
+  categories?: Array<{ name: string; description: string }>;
 }): Promise<ExtractionResponse> {
   // Cap content length fed to the model to control token usage/cost per run.
   const truncated = content.slice(0, 12000);
 
-  const prompt = `Knowledge vault goal: "${knowledgeBaseGoal}"
+  const categoryList =
+    categories.length > 0
+      ? `Knowledge vault categories (name — description):\n${categories
+          .map((c) => `- ${c.name}${c.description ? ` — ${c.description}` : ""}`)
+          .join("\n")}\n`
+      : "This knowledge vault has no categories yet — set category to null.\n";
 
+  const prompt = `Knowledge vault goal: "${knowledgeBaseGoal}"
+${categoryList}
 Document title: ${title}
 Document URL: ${url}
 
