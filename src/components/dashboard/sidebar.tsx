@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Home, Search, Inbox, Settings, Plus, Library } from "lucide-react";
+import { BookOpen, Home, Search, Inbox, Settings, Plus, Library, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface SidebarKnowledgeBase {
@@ -106,9 +106,21 @@ export function Sidebar({
       </div>
 
       {userEmail && (
-        <div className="border-t border-border px-4 py-3">
-          <p className="truncate text-xs font-medium text-foreground">{userEmail.split("@")[0]}</p>
-          <p className="truncate text-xs text-muted">{userEmail}</p>
+        <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
+          <div className="min-w-0">
+            <p className="truncate text-xs font-medium text-foreground">{userEmail.split("@")[0]}</p>
+            <p className="truncate text-xs text-muted">{userEmail}</p>
+          </div>
+          <form action="/api/auth/logout" method="post">
+            <button
+              type="submit"
+              aria-label="Sign out"
+              title="Sign out"
+              className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </form>
         </div>
       )}
     </aside>

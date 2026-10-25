@@ -302,11 +302,15 @@ treated as production-ready multi-user security.
   | `ANTHROPIC_API_KEY` | Claude API key for all AI features |
   | `ANTHROPIC_MODEL` | Optional model override |
   | `VAULT_DIR` | Set to `/tmp/vault` (best-effort Markdown export; `/tmp` is temporary) |
+  | `APP_PASSWORD` | The shared workspace password people sign in with |
+  | `AUTH_SECRET` | Random 32+ character key that signs session cookies (`openssl rand -hex 32`) |
 
 - **Schema changes:** create the migration locally (`npm run db:migrate`), then apply it to Turso
   with `TURSO_DATABASE_URL=… TURSO_AUTH_TOKEN=… npm run db:migrate:turso` before deploying code
   that needs it. Re-running is safe (applied migrations are recorded in `_turso_migrations`).
 - **Not available on Vercel:** scheduled (Daily/Weekly/Monthly) research — the in-process
   scheduler is disabled there; manual "Run Research Now" works. AI routes set `maxDuration`.
-- **No authentication:** anyone who can open the deployment can read and change all data and
-  use the configured Anthropic key (see §5/§7).
+- **Sign-in:** `src/proxy.ts` requires a session for every page and API route; unauthenticated
+  pages redirect to `/login`, API calls get 401. It is one shared password for one shared
+  workspace — there are no per-user accounts or per-user data separation. Without
+  `APP_PASSWORD`/`AUTH_SECRET` the gate is open in development and fails closed in production.

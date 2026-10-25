@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, ChevronDown, Home, Inbox, Search, Settings } from "lucide-react";
+import { BookOpen, ChevronDown, Home, Inbox, LogOut, Search, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Same destinations and icons as the sidebar's top nav (components/dashboard/sidebar.tsx),
@@ -14,7 +14,7 @@ export function BrandMenu({ inboxCount }: { inboxCount: number }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const itemRefs = useRef<(HTMLElement | null)[]>([]);
 
   const items = [
     { href: "/", label: "Home", icon: Home },
@@ -45,8 +45,8 @@ export function BrandMenu({ inboxCount }: { inboxCount: number }) {
   }, [open]);
 
   function handleMenuKeyDown(e: React.KeyboardEvent) {
-    const elements = itemRefs.current.filter((el): el is HTMLAnchorElement => !!el);
-    const current = elements.indexOf(document.activeElement as HTMLAnchorElement);
+    const elements = itemRefs.current.filter((el): el is HTMLElement => !!el);
+    const current = elements.indexOf(document.activeElement as HTMLElement);
     let next: number | null = null;
     if (e.key === "ArrowDown") next = (current + 1) % elements.length;
     else if (e.key === "ArrowUp") next = (current - 1 + elements.length) % elements.length;
@@ -118,6 +118,21 @@ export function BrandMenu({ inboxCount }: { inboxCount: number }) {
               </Link>
             );
           })}
+          <div role="separator" className="my-1 h-px bg-border" />
+          <form action="/api/auth/logout" method="post">
+            <button
+              ref={(el) => {
+                itemRefs.current[items.length] = el;
+              }}
+              type="submit"
+              role="menuitem"
+              tabIndex={-1}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-surface focus-visible:bg-surface"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
+          </form>
         </div>
       )}
     </div>
