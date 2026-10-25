@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EntryCard, type EntryCardData } from "./entry-card";
 import { CategoryManager, type ManagedCategory } from "./category-manager";
+import { PageEntrance } from "@/components/motion/page-entrance";
+import { AnimatedText } from "@/components/motion/animated-text";
 import { apiGet } from "@/lib/client/api";
 
 const UNCATEGORIZED_KEY = "__uncategorized__";
@@ -76,8 +78,8 @@ export function LibraryBrowser({
   const nothingToShow = trimmedSearch ? entries.length === 0 : entries.length === 0 && categories.length === 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-3">
+    <PageEntrance className="flex flex-col gap-5">
+      <AnimatedText delay={0.16} className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted" />
           <Input
@@ -87,9 +89,11 @@ export function LibraryBrowser({
             className="pl-8"
           />
         </div>
-      </div>
+      </AnimatedText>
 
-      <CategoryManager knowledgeBaseId={knowledgeBaseId} categories={categories} onChanged={() => router.refresh()} />
+      <AnimatedText delay={0.24}>
+        <CategoryManager knowledgeBaseId={knowledgeBaseId} categories={categories} onChanged={() => router.refresh()} />
+      </AnimatedText>
 
       {nothingToShow ? (
         <EmptyState
@@ -98,26 +102,28 @@ export function LibraryBrowser({
         />
       ) : (
         <div className="flex flex-col gap-8">
-          {groups.map((group) => (
-            <section key={group.id}>
-              <div className="mb-3 flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-foreground">{group.name}</h2>
-                <span className="text-xs text-muted">({group.entries.length})</span>
-              </div>
-              {group.entries.length === 0 ? (
-                <p className="text-sm text-muted">No entries in this category yet.</p>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {group.entries.map((entry) => (
-                    <EntryCard key={entry.id} entry={entry} highlighted={entry.id === targetEntryId} />
-                  ))}
+          {groups.map((group, i) => (
+            <AnimatedText key={group.id} as="div" delay={0.32 + i * 0.07}>
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-foreground">{group.name}</h2>
+                  <span className="text-xs text-muted">({group.entries.length})</span>
                 </div>
-              )}
-            </section>
+                {group.entries.length === 0 ? (
+                  <p className="text-sm text-muted">No entries in this category yet.</p>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {group.entries.map((entry) => (
+                      <EntryCard key={entry.id} entry={entry} highlighted={entry.id === targetEntryId} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </AnimatedText>
           ))}
         </div>
       )}
-    </div>
+    </PageEntrance>
   );
 }
 

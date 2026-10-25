@@ -76,7 +76,7 @@ export function BrandMenu({ inboxCount }: { inboxCount: number }) {
         }}
         className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       >
-        <BookOpen className="h-4 w-4 text-accent-ink" />
+        <BookOpen className="h-4 w-4 text-accent-strong" />
         <span className="text-sm font-semibold text-foreground">Axion</span>
         <ChevronDown className={cn("h-3.5 w-3.5 text-muted transition-transform", open && "rotate-180")} />
       </button>
@@ -103,7 +103,7 @@ export function BrandMenu({ inboxCount }: { inboxCount: number }) {
                 onClick={() => setOpen(false)}
                 className={cn(
                   "flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:bg-surface",
-                  active ? "bg-accent-soft text-accent-ink" : "text-foreground hover:bg-surface"
+                  active ? "bg-accent-soft text-accent-strong" : "text-foreground hover:bg-surface"
                 )}
               >
                 <span className="flex items-center gap-2">

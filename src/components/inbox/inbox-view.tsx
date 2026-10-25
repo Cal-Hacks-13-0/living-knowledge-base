@@ -169,7 +169,7 @@ function OverviewCard({
       aria-labelledby="week-heading"
       className="rounded-xl border border-border bg-accent-soft px-5 py-4 text-foreground"
     >
-      <p className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-ink">
+      <p className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-strong">
         Your week, distilled
         <span className="font-medium normal-case tracking-normal text-muted">{formatRange(range.start, range.end)}</span>
       </p>
@@ -287,7 +287,7 @@ function WeeklyReview({
                         <button
                           type="button"
                           onClick={() => onShowEvent(ref.id)}
-                          className="rounded text-left font-medium text-accent-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                          className="rounded text-left font-medium text-accent-strong underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                         >
                           {ref.title}
                         </button>
@@ -296,7 +296,7 @@ function WeeklyReview({
                             href={ref.sourceUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-0.5 text-accent-ink hover:underline"
+                            className="inline-flex items-center gap-0.5 text-accent-strong hover:underline"
                           >
                             {ref.sourceName ?? "Source"} <ExternalLink className="h-3 w-3" />
                           </a>
@@ -376,19 +376,19 @@ function FeedItem({
   return (
     <li id={`event-${event.id}`} className="scroll-mt-6 border-b border-border py-3.5">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-        <span className="rounded bg-accent-soft px-1.5 py-0.5 font-medium text-accent-ink">{CATEGORY_LABEL[event.category]}</span>
+        <span className="rounded bg-accent-soft px-1.5 py-0.5 font-medium text-accent-strong">{CATEGORY_LABEL[event.category]}</span>
         <StatusLabel event={event} />
         <span className="text-muted">{formatTime(event.occurredAt, timeZone)}</span>
       </div>
       <p className="mt-1.5 text-sm font-medium text-foreground">{event.title}</p>
       <p className="mt-0.5 text-xs text-muted">
-        <Link href={`/kb/${event.vault.id}`} className="text-accent-ink hover:underline">
+        <Link href={`/kb/${event.vault.id}`} className="text-accent-strong hover:underline">
           {event.vault.name}
         </Link>
         {event.note && (
           <>
             {" › "}
-            <Link href={noteHref} className="text-accent-ink hover:underline">
+            <Link href={noteHref} className="text-accent-strong hover:underline">
               {event.note.title}
             </Link>
           </>
@@ -402,7 +402,7 @@ function FeedItem({
           {event.sourceUrl && (
             <>
               {" · "}
-              <a href={event.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-accent-ink hover:underline">
+              <a href={event.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-accent-strong hover:underline">
                 View source <ExternalLink className="h-3 w-3" />
               </a>
             </>
@@ -413,7 +413,7 @@ function FeedItem({
           onClick={onToggle}
           aria-expanded={open}
           aria-controls={detailsId}
-          className="inline-flex items-center gap-1 rounded font-medium text-accent-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="inline-flex items-center gap-1 rounded font-medium text-accent-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           {open ? "Hide details" : "Details"}
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
@@ -427,7 +427,7 @@ function FeedItem({
 function StatusLabel({ event }: { event: InboxFeedEvent }) {
   if (event.status === "PROPOSED") {
     return (
-      <span className="rounded border border-accent-ink/40 px-1.5 py-0.5 font-medium text-accent-ink">
+      <span className="rounded border border-accent-strong/40 px-1.5 py-0.5 font-medium text-accent-strong">
         Proposed · awaiting your review
       </span>
     );
@@ -478,7 +478,7 @@ function FeedItemDetails({ id, event, noteHref }: { id: string; event: InboxFeed
         </div>
       )}
       {error && <Alert variant="danger">{error}</Alert>}
-      <Link href={noteHref} className="w-fit text-xs font-medium text-accent-ink hover:underline">
+      <Link href={noteHref} className="w-fit text-xs font-medium text-accent-strong hover:underline">
         {event.note ? "Open note →" : "Open knowledge vault →"}
       </Link>
     </div>

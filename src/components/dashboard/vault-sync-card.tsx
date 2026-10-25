@@ -31,7 +31,7 @@ export function VaultSyncCard({ knowledgeBaseId, vaultPath }: { knowledgeBaseId:
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FolderTree className="h-4 w-4 text-accent-ink" /> Markdown vault
+          <FolderTree className="h-4 w-4 text-accent-strong" /> Markdown vault
         </CardTitle>
         <CardDescription>
           Every entry, insight, source, and proposal is also kept as plain Markdown files on disk — open it in

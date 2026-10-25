@@ -26,7 +26,7 @@ export function KbNav({ knowledgeBaseId }: { knowledgeBaseId: string }) {
             className={cn(
               "px-3 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
               active
-                ? "border-accent text-foreground"
+                ? "border-accent-strong text-foreground"
                 : "border-transparent text-muted hover:text-foreground"
             )}
           >
