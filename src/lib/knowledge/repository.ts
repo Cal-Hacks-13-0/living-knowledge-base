@@ -76,6 +76,31 @@ export async function matchCategoryByTopics(knowledgeBaseId: string, topics: str
   return null;
 }
 
+/** The vault's top-level categories, as offered to the Extraction Agent. */
+export async function listCategoryChoices(knowledgeBaseId: string) {
+  return prisma.knowledgeCategory.findMany({
+    where: { knowledgeBaseId, parentId: null },
+    orderBy: { name: "asc" },
+    select: { name: true, description: true },
+  });
+}
+
+/**
+ * The category a new entry is filed under: the existing top-level category
+ * the Extraction Agent named (exact name, case-insensitive), else a
+ * topic/name match. Anything else — including a name that doesn't exist —
+ * leaves it Uncategorized rather than creating a category.
+ */
+export async function resolveEntryCategory(knowledgeBaseId: string, extraction: { category?: string | null; topics: string[] }) {
+  const wanted = extraction.category?.trim().toLowerCase();
+  if (wanted) {
+    const categories = await prisma.knowledgeCategory.findMany({ where: { knowledgeBaseId, parentId: null } });
+    const exact = categories.find((c) => c.name.trim().toLowerCase() === wanted);
+    if (exact) return exact;
+  }
+  return matchCategoryByTopics(knowledgeBaseId, extraction.topics);
+}
+
 export async function createDraftEntry(input: {
   knowledgeBaseId: string;
   categoryId: string | null;

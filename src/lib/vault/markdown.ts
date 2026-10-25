@@ -1,3 +1,4 @@
+import { explainSourceError } from "@/lib/research/source-errors";
 import type {
   KnowledgeBase,
   KnowledgeCategory,
@@ -163,7 +164,7 @@ export function renderSource(source: Source, documents: SourceDocument[]): strin
 
 **URL:** ${source.url}
 **Type:** ${source.type} · **Status:** ${source.status}
-${source.lastError ? `**Last error:** ${source.lastError}\n` : ""}
+${source.status === "ERROR" && source.lastError ? sourceProblemMarkdown(source.lastError) : ""}
 ## Fetched documents (most recent ${Math.min(documents.length, 100)} of ${documents.length})
 
 ${docLines}
@@ -197,4 +198,10 @@ ${targetEntry ? `**Target entry:** [[${targetEntry.title}]]\n` : ""}
 ${parsed?.explanation ? `## Why\n\n${parsed.explanation}\n` : ""}
 ${parsed?.proposed.summary ? `## Proposed change\n\n${parsed.proposed.summary}\n` : ""}
 `;
+}
+
+/** The same plain-language explanation the Sources page shows, with the raw error kept below it. */
+function sourceProblemMarkdown(lastError: string): string {
+  const e = explainSourceError(lastError);
+  return `**Problem:** ${e.title} — ${e.message}${e.nextStep ? ` ${e.nextStep}` : ""}\n**Technical details:** ${e.technical}\n`;
 }

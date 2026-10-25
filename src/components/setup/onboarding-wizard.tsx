@@ -17,6 +17,8 @@ import { CategoryList } from "@/components/blueprint/category-list";
 import { SourceList } from "@/components/blueprint/source-list";
 import { apiPost, ApiError } from "@/lib/client/api";
 import { AmbientBackdrop } from "@/components/ambient/ambient-backdrop";
+import { AmbientToggle } from "@/components/ambient/ambient-toggle";
+import { usePrefersReducedMotion } from "@/lib/client/reduced-motion";
 import { newVaultReturnPath } from "@/components/route-memory";
 import type {
   SetupQuestion,
@@ -40,6 +42,12 @@ export function OnboardingWizard() {
   const regionRef = useRef<HTMLDivElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // Background "3D motion": On for each new flow (Off under reduced motion)
+  // until the user flips it; lives here, so it holds across steps.
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [motionChoice, setMotionChoice] = useState<boolean | null>(null);
+  const backgroundMotion = prefersReducedMotion === null ? null : (motionChoice ?? !prefersReducedMotion);
 
   // Step 0: goal + dynamic questions
   const [goal, setGoal] = useState(searchParams.get("goal") ?? "");
@@ -197,10 +205,11 @@ export function OnboardingWizard() {
     // cursor fluid, no network); the side columns are frosted glass over it and
     // every step sits in a readable glass panel.
     <div ref={regionRef} className="ambient relative flex h-dvh">
-      <AmbientBackdrop mode="stars" regionRef={regionRef} />
+      <AmbientBackdrop mode="stars" regionRef={regionRef} motion={backgroundMotion ?? false} />
       <StepSidebar steps={STEPS} currentIndex={stepIndex} />
 
-      <div className="relative z-10 h-full min-w-0 flex-1 overflow-y-auto px-6 py-10">
+      {/* Bottom padding keeps Back/Next scrollable clear of the 3D motion toggle. */}
+      <div className="relative z-10 h-full min-w-0 flex-1 overflow-y-auto px-6 pb-20 pt-10">
         <div className="mx-auto flex max-w-2xl flex-col gap-6 rounded-2xl border border-border bg-card px-8 py-8 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)]">
           {error && <Alert variant="danger">{error}</Alert>}
 
@@ -365,6 +374,15 @@ export function OnboardingWizard() {
       </div>
 
       {stepIndex === 0 && <HowItWorksPanel />}
+
+      {backgroundMotion !== null && (
+        <AmbientToggle
+          label="3D motion"
+          enabled={backgroundMotion}
+          onToggle={() => setMotionChoice(!backgroundMotion)}
+          className="absolute bottom-4 right-4"
+        />
+      )}
     </div>
   );
 }

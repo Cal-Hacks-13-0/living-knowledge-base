@@ -5,6 +5,8 @@ import { createContext, useContext } from "react";
 export interface AssistantContextValue {
   open: boolean;
   toggle: () => void;
+  /** Pinned top-right corner of the main content area; the page's trigger renders here. */
+  triggerSlot: HTMLElement | null;
 }
 
 export const AssistantContext = createContext<AssistantContextValue | null>(null);

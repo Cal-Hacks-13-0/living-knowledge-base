@@ -63,10 +63,23 @@ export const CreateSourceRequestSchema = z.object({
   type: SourceTypeSchema,
 });
 
+// --- /api/knowledge-bases/:id/sources/:sourceId (PATCH) --------------------
+export const UpdateSourceRequestSchema = z.object({
+  url: z.string().min(1).max(1000),
+});
+
 // --- /api/knowledge-bases/:id/categories (POST) -----------------------------
 export const CreateCategoryRequestSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(2000).default(""),
+});
+
+// --- /api/knowledge-bases/:id/entries (PATCH) ------------------------------
+// Assign one or many entries to a category of the same knowledge vault
+// (null = back to Uncategorized). Only the category changes.
+export const AssignEntryCategoryRequestSchema = z.object({
+  entryIds: z.array(z.string().min(1)).min(1).max(200),
+  categoryId: z.string().min(1).nullable(),
 });
 
 // --- /api/insights/:id (PATCH) ----------------------------------------------

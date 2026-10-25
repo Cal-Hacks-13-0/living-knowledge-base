@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import { createDraftEntry, matchCategoryByTopics } from "./repository";
+import { createDraftEntry, resolveEntryCategory } from "./repository";
 import { createChangeProposal } from "./versioning";
 import type { ComparisonResponse, ExtractionResponse } from "@/lib/ai/schemas";
 import { recordInboxEventSafe, type InboxOrigin } from "@/lib/inbox/events";
@@ -54,7 +54,7 @@ export async function applyComparisonClassification({
     : null;
 
   if (comparison.classification === "UNRELATED" || comparison.classification === "EXTENSION") {
-    const category = await matchCategoryByTopics(knowledgeBaseId, extraction.topics);
+    const category = await resolveEntryCategory(knowledgeBaseId, extraction);
     const entry = await createDraftEntry({
       knowledgeBaseId,
       categoryId: category?.id ?? null,

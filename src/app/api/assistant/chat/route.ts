@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ok, handleApiError } from "@/lib/api/response";
 import { ChatRequestSchema } from "@/lib/validation/schemas";
 import { answerAssistantQuestion } from "@/lib/ai/assistant-agent";
+import { listVaultCategories } from "@/lib/knowledge/categorize";
 
 // Vercel function time limit in seconds (tool calls can trigger a full research run).
 export const maxDuration = 300;
@@ -38,7 +39,11 @@ export async function POST(req: NextRequest) {
         ? { OR: keywords.flatMap((kw) => [{ title: { contains: kw } }, { summary: { contains: kw } }]) }
         : {};
 
-    const [relevantEntries, recentInsights] = await Promise.all([
+    const currentId = body.currentKnowledgeBaseId
+      ? ((await prisma.knowledgeBase.findUnique({ where: { id: body.currentKnowledgeBaseId }, select: { id: true } }))?.id ?? null)
+      : null;
+
+    const [relevantEntries, recentInsights, currentVault] = await Promise.all([
       prisma.knowledgeEntry.findMany({
         where: entryWhere,
         orderBy: { updatedAt: "desc" },
@@ -50,11 +55,21 @@ export async function POST(req: NextRequest) {
         take: 5,
         include: { knowledgeBase: { select: { name: true } } },
       }),
+      currentId
+        ? Promise.all([listVaultCategories(currentId), prisma.knowledgeEntry.count({ where: { knowledgeBaseId: currentId } })]).then(
+            ([{ categories, uncategorized }, totalEntries]) => ({
+              totalEntries,
+              uncategorized,
+              categories: categories.map((c) => ({ name: c.name, entryCount: c.entryCount })),
+            })
+          )
+        : null,
     ]);
 
     const answer = await answerAssistantQuestion({
       knowledgeBases,
-      currentKnowledgeBaseId: body.currentKnowledgeBaseId ?? null,
+      currentKnowledgeBaseId: currentId,
+      currentVault,
       message: body.message,
       history: body.history,
       relevantEntries: relevantEntries.map((e) => ({

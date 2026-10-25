@@ -41,6 +41,7 @@ describe("compareKnowledge (Comparison Agent)", () => {
         publishedAt: null,
         excerpts: [],
         isRelevant: true,
+        category: null,
       },
       existingEntries: [],
     });
@@ -74,6 +75,7 @@ describe("compareKnowledge (Comparison Agent)", () => {
         publishedAt: null,
         excerpts: [],
         isRelevant: true,
+        category: null,
       },
       existingEntries: [{ id: "entry-1", title: "X is true", summary: "X is true, established fact." }],
     });
@@ -96,6 +98,7 @@ describe("compareKnowledge (Comparison Agent)", () => {
           publishedAt: null,
           excerpts: [],
           isRelevant: true,
+          category: null,
         },
         existingEntries: [],
       })

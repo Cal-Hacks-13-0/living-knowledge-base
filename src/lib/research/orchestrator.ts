@@ -3,7 +3,7 @@ import { isAiConfigured } from "@/lib/ai/client";
 import { extractKnowledge } from "@/lib/ai/extraction-agent";
 import { generateInsights, type InsightFinding } from "@/lib/ai/insight-agent";
 import { compareAgainstExisting } from "@/lib/knowledge/comparison";
-import { getKnowledgeBaseOrThrow, listMonitorableSources } from "@/lib/knowledge/repository";
+import { getKnowledgeBaseOrThrow, listCategoryChoices, listMonitorableSources } from "@/lib/knowledge/repository";
 import { applyComparisonClassification } from "@/lib/knowledge/classification";
 import { syncKnowledgeBaseToVaultSafe } from "@/lib/vault/sync";
 import { fetchRssSource } from "./rss-fetcher";
@@ -26,7 +26,7 @@ export class OverlappingRunError extends Error {
   }
 }
 
-async function fetchFromSource(source: Source) {
+export async function fetchFromSource(source: Source) {
   const conditional = { etag: source.etag, lastModified: source.lastModified };
   switch (source.type) {
     case "RSS":
@@ -144,6 +144,9 @@ export async function runResearch(
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
+        // Full diagnostics stay in the server log; the UI explains `message`
+        // in plain language (lib/research/source-errors.ts).
+        console.warn(`[research] source ${source.id} (${source.url}) failed:`, err);
         runNotes.push(`${source.name}: ${message}`);
         sourcesFailedCount += 1;
         await prisma.source.update({
@@ -163,6 +166,7 @@ export async function runResearch(
 
     if (aiConfigured) {
       const toProcess = storedDocs.slice(0, MAX_DOCUMENTS_PROCESSED_PER_RUN);
+      const categories = toProcess.length > 0 ? await listCategoryChoices(knowledgeBaseId) : [];
       for (const { doc, sourceDocumentId } of toProcess) {
         try {
           const extraction = await extractKnowledge({
@@ -170,6 +174,7 @@ export async function runResearch(
             title: doc.title,
             url: doc.url,
             content: doc.content,
+            categories,
           });
           if (!extraction.isRelevant) continue;
 

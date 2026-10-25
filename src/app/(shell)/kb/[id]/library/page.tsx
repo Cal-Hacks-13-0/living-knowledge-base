@@ -9,7 +9,7 @@ export default async function LibraryPage({ params }: { params: Promise<{ id: st
       where: { knowledgeBaseId: id },
       orderBy: { updatedAt: "desc" },
       include: {
-        category: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, parentId: true } },
         sourceDocument: { select: { id: true, url: true, title: true } },
         insightEvidence: { include: { insight: { select: { id: true, title: true } } } },
       },

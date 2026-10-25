@@ -58,6 +58,7 @@ export function ShellWithAssistant({
 }) {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [dragging, setDragging] = useState<"sidebar" | "assistant" | null>(null);
+  const [triggerSlot, setTriggerSlot] = useState<HTMLDivElement | null>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const prefs = useLayoutPrefs();
   const pathname = usePathname();
@@ -81,7 +82,9 @@ export function ShellWithAssistant({
 
   return (
     <MotionConfig reducedMotion="user">
-      <AssistantContext.Provider value={{ open: assistantOpen, toggle: () => setAssistantOpen((o) => !o) }}>
+      <AssistantContext.Provider
+        value={{ open: assistantOpen, toggle: () => setAssistantOpen((o) => !o), triggerSlot }}
+      >
         <div className={cn("relative flex h-dvh", dragging && "cursor-col-resize select-none")}>
           {/* Base behind the whole workspace, so the frosted sidebar has a starfield to blur. */}
           <div aria-hidden className="ambient-charcoal pointer-events-none absolute inset-0">
@@ -133,7 +136,14 @@ export function ShellWithAssistant({
             className="ambient relative min-w-0 flex-1"
           >
             <AmbientBackdrop mode="fluid" regionRef={regionRef} />
-            <main className="relative z-10 h-full overflow-y-auto pt-14 sm:pt-0">{children}</main>
+            <main className="@container/workspace relative z-10 h-full overflow-y-auto pt-14 sm:pt-0">
+              {/* Zero-height sticky slot: pages' AI Assistant trigger is portaled
+                  here so it stays in the top-right corner while <main> scrolls.
+                  Being inside <main>, it sits above page content but below
+                  menus/overlays that page content layers above it. */}
+              <div ref={setTriggerSlot} className="pointer-events-none sticky top-0 z-[15] h-0" />
+              {children}
+            </main>
             <CursorTrailToggle className="absolute bottom-4 right-4 hidden sm:flex" />
           </motion.div>
           <AiAssistantPanel

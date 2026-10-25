@@ -20,6 +20,8 @@ const MAX_PITCH = (37 * Math.PI) / 180;
 const REST_YAW = 0.35;
 const REST_PITCH = -0.22;
 const EASE_PER_SECOND = 4;
+// After motion is switched back on, the easing builds up over this long so the turn starts gently.
+const RESUME_RAMP_MS = 700;
 // Stars live on a sky dome around the scene and turn with it (~270 on screen at 1280×800).
 const STAR_COUNT = 2400;
 const EDGE_BUCKETS = 10;
@@ -260,13 +262,28 @@ const starDomes = new Map<number, Stars>();
  * `showGraph: false` draws only the rotating star dome (used behind the
  * new-vault flow). `fillParent` sizes it to its positioned parent instead of
  * the viewport. `starBoost` brightens the stars a little.
+ *
+ * `motion` hands the on/off decision to the caller (its own toggle, which
+ * already accounts for reduced motion); left undefined, the scene follows
+ * the cursor unless the OS asks for reduced motion. Turning motion off
+ * freezes the current orientation and stops requesting frames; turning it
+ * back on eases from there toward the cursor — no jump, no restart.
  */
 export function NetworkSphere({
   showGraph = true,
   fillParent = false,
   starBoost = 1,
-}: { showGraph?: boolean; fillParent?: boolean; starBoost?: number } = {}) {
+  motion,
+}: { showGraph?: boolean; fillParent?: boolean; starBoost?: number; motion?: boolean } = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const motionRef = useRef(motion);
+  // Set by the render effect below; applies a change of `motion` to the running scene.
+  const applyMotionRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    motionRef.current = motion;
+    applyMotionRef.current?.();
+  }, [motion]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -294,6 +311,10 @@ export function NetworkSphere({
     let cy = 0;
     let raf = 0;
     let last = 0;
+    // Last mouse position (-1…1), kept while frozen so resuming eases toward it.
+    let pointer: { nx: number; ny: number } | null = null;
+    let resumedAt = 0;
+    const moving = () => motionRef.current ?? !reduceMotion;
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
@@ -407,7 +428,13 @@ export function NetworkSphere({
     const step = (now: number) => {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 1 / 60;
       last = now;
-      const k = 1 - Math.exp(-EASE_PER_SECOND * dt);
+      let rate = EASE_PER_SECOND;
+      if (resumedAt) {
+        const ramp = Math.min((now - resumedAt) / RESUME_RAMP_MS, 1);
+        rate *= ramp * ramp;
+        if (ramp === 1) resumedAt = 0;
+      }
+      const k = 1 - Math.exp(-rate * dt);
       yaw += (targetYaw - yaw) * k;
       pitch += (targetPitch - pitch) * k;
       draw();
@@ -421,13 +448,32 @@ export function NetworkSphere({
       if (!raf) raf = requestAnimationFrame(step);
     };
 
+    const aimAtPointer = () => {
+      if (!pointer) return;
+      targetYaw = REST_YAW + pointer.nx * MAX_YAW;
+      targetPitch = REST_PITCH - pointer.ny * MAX_PITCH;
+      kick();
+    };
+
     const onPointerMove = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" && e.pointerType !== "pen") return;
-      const nx = (e.clientX / width) * 2 - 1;
-      const ny = (e.clientY / height) * 2 - 1;
-      targetYaw = REST_YAW + nx * MAX_YAW;
-      targetPitch = REST_PITCH - ny * MAX_PITCH;
-      kick();
+      pointer = { nx: (e.clientX / width) * 2 - 1, ny: (e.clientY / height) * 2 - 1 };
+      if (moving()) aimAtPointer();
+    };
+
+    applyMotionRef.current = () => {
+      if (moving()) {
+        resumedAt = performance.now();
+        aimAtPointer();
+        return;
+      }
+      // Freeze exactly where the scene is now; the last drawn frame stays up.
+      cancelAnimationFrame(raf);
+      raf = 0;
+      last = 0;
+      resumedAt = 0;
+      targetYaw = yaw;
+      targetPitch = pitch;
     };
 
     resize();
@@ -440,9 +486,10 @@ export function NetworkSphere({
     window.addEventListener("resize", onResize);
     const parentObserver = fillParent && canvas.parentElement ? new ResizeObserver(onResize) : null;
     if (parentObserver && canvas.parentElement) parentObserver.observe(canvas.parentElement);
-    if (!reduceMotion) window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
 
     return () => {
+      applyMotionRef.current = null;
       cancelAnimationFrame(raf);
       raf = 0;
       window.removeEventListener("resize", onResize);
